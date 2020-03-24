@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.github.mapper.RoleMapper">
+  <resultMap id="BaseResultMap" type="com.github.model.SysRole">
+    <id column="ID" jdbcType="VARCHAR" property="id" />
+    <result column="ROLE_NAME" jdbcType="VARCHAR" property="roleName" />
+    <result column="ROLE_DESC" jdbcType="TINYINT" property="roleDesc" />
+  </resultMap>
+
+	
+	<select id="findRoleByUserId" resultMap="BaseResultMap">
+		SELECT * FROM `sys_role` WHERE ID IN (
+         SELECT RID FROM sys_user_role WHERE  UID =#{userId}
+        )
+	</select>
+
+</mapper>

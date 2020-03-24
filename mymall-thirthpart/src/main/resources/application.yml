@@ -1,0 +1,24 @@
+server:
+  port: 9100
+
+spring:
+  application:
+    name: mymall-thirthpart
+  main:
+    allow-bean-definition-overriding: true
+
+security:
+  oauth2:
+    client:
+      client-id: c1
+      client-secret: 123
+    resource:
+      jwt:
+        key-uri: http://localhost:9001/oauth/token_key
+
+logging:
+  level:
+    com.github: debug
+
+
+

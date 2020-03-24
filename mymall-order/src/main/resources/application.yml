@@ -1,0 +1,38 @@
+server:
+  port: 9002
+
+spring:
+  application:
+    name: mymall-order
+  main:
+    allow-bean-definition-overriding: true
+
+security:
+  oauth2:
+    client:
+      client-id: c2
+      client-secret: 123
+    resource:
+      jwt:
+#        key-uri: http://localhost:9001/oauth/token_key
+        key-value: 123456
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:9200/eureka/
+  instance:
+    preferIpAddress: true
+    instance-id: ${spring.application.name}:${spring.cloud.client.ip-address}:${spring.application.instance_id:${server.port}}
+
+oauth:
+  resource:
+    security:
+      override: false
+
+logging:
+  level:
+    com.github: debug
+
+
+
