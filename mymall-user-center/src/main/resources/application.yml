@@ -1,23 +1,21 @@
 server:
-  port: 9004
+  port: 9002
 
 spring:
   application:
-    name: mymall-order
+    name: mymall-user-center
   main:
     allow-bean-definition-overriding: true
 
 security:
   oauth2:
     client:
-      client-id: c1
+      client-id: c2
       client-secret: 123
-      access-token-uri: http://localhost:9001/oauth/token
     resource:
       jwt:
 #        key-uri: http://localhost:9001/oauth/token_key
         key-value: 123456
-
 
 eureka:
   client:
@@ -27,6 +25,7 @@ eureka:
     preferIpAddress: true
     instance-id: ${spring.application.name}:${spring.cloud.client.ip-address}:${spring.application.instance_id:${server.port}}
 
+
 ribbon:
   MaxAutoRetries: 2 #最大重试次数，当Eureka中可以找到服务，但是服务连不上时将会重试，如果eureka中找不到服务则直接走断路器
   MaxAutoRetriesNextServer: 3 #切换实例的重试次数
@@ -34,10 +33,9 @@ ribbon:
   ConnectTimeout: 5000  #请求连接的超时时间
   ReadTimeout: 6000 #请求处理的超时时间
 
-
 feign:
   hystrix:
-    enabled: false
+    enabled: true
   #请求和响应GZIP压缩支持
   compression:
     request:

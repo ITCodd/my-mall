@@ -4,6 +4,8 @@ import cn.github.starter.pojo.UserInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
+import org.springframework.core.annotation.OrderUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
@@ -19,7 +21,7 @@ import java.util.Map;
 @Slf4j
 public class SecurityContextUtils {
 
-    @Autowired
+    @Autowired(required=false)
     TokenStore tokenStore;
 
     public  UserInfo getCurrentUserInfo(){
@@ -48,6 +50,15 @@ public class SecurityContextUtils {
                 }
                 return userInfo;
             }
+        }
+        return null;
+    }
+
+    public String getAccessToken(){
+        Object details = SecurityContextHolder.getContext().getAuthentication().getDetails();
+        if (details instanceof OAuth2AuthenticationDetails) {
+            String accessToken = ((OAuth2AuthenticationDetails) details).getTokenValue();
+            return "Bearer "+accessToken;
         }
         return null;
     }

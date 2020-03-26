@@ -20,6 +20,11 @@ zuul:
       serviceId: mymall-order #指定服务id，从Eureka中找到服务的ip和端口
       strip-prefix: true
       sensitiveHeaders:
+    mymall-user-center:  #路由名称，名称任意，保持所有路由名称唯一
+      path: /user/**
+      serviceId: mymall-user-center #指定服务id，从Eureka中找到服务的ip和端口
+      strip-prefix: true
+      sensitiveHeaders:
 
 eureka:
   client:
