@@ -4,6 +4,7 @@ import com.github.auth.mobile.SmsCodeAuthenticationSecurityConfig;
 import com.github.auth.validatecode.ValidateCodeAuthenticationFilter;
 import com.github.auth.validatecode.ValidateCodeLoginHandler;
 import com.github.handler.MymallAccessDeniedHandler;
+import com.github.handler.MymallAuthenticationEntryPoint;
 import com.github.handler.MymallAuthenticationFailureHandler;
 import com.github.handler.MymallAuthenticationSucessHandler;
 import com.github.service.SysUserService;
@@ -61,6 +62,11 @@ public class OAuth2WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return new MymallAccessDeniedHandler();
     }
 
+    @Bean
+    public MymallAuthenticationEntryPoint authenticationEntryPoint(){
+        return new MymallAuthenticationEntryPoint();
+    }
+
 
     @Override
     public void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -92,7 +98,8 @@ public class OAuth2WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .csrf()
                 .disable()
                 .exceptionHandling()
-                .accessDeniedHandler(accessDeniedHandler());
+                .accessDeniedHandler(accessDeniedHandler())
+                .authenticationEntryPoint(authenticationEntryPoint());
 
     }
 
