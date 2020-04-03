@@ -6,6 +6,11 @@ spring:
     name: mymall-user-center
   main:
     allow-bean-definition-overriding: true
+  http:
+    encoding:
+      force: true
+      charset: UTF-8
+      enabled: true
 
 security:
   oauth2:
