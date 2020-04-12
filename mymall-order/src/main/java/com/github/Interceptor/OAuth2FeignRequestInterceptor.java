@@ -5,6 +5,7 @@ import feign.RequestTemplate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
 import org.springframework.security.oauth2.client.token.AccessTokenRequest;
@@ -19,19 +20,13 @@ public class OAuth2FeignRequestInterceptor implements RequestInterceptor {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_TOKEN_TYPE = "Bearer";
 
-    @Autowired
-    private OAuth2ClientContext oauth2ClientContext;
 
     @Override
     public void apply(RequestTemplate requestTemplate) {
         String accessToken = null;
-        try{
-            // 1. Hystrix 使用 SEMAPHORE 的线程模式，可以从 OAuth2ClientContext 对象中获取 Access Token
-            AccessTokenRequest r = this.oauth2ClientContext.getAccessTokenRequest();
-            accessToken = r.getExistingToken().toString();
-        }catch(BeanCreationException e){
-            // 2. 使用 Hystrix shareSecurityContext 特性，不能获得 OAuth2ClientContext，通过 SecurityContext 获取 access token
-            Object details = SecurityContextHolder.getContext().getAuthentication().getDetails();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if(authentication!=null){
+            Object details = authentication.getDetails();
             if (details instanceof OAuth2AuthenticationDetails) {
                 accessToken = ((OAuth2AuthenticationDetails) details).getTokenValue();
             }

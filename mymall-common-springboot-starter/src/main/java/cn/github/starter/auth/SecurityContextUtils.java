@@ -21,10 +21,13 @@ import java.util.Map;
 @Slf4j
 public class SecurityContextUtils {
 
-    @Autowired(required=false)
-    TokenStore tokenStore;
+    private static TokenStore tokenStore;
 
-    public  UserInfo getCurrentUserInfo(){
+    public static void setTokenStore(TokenStore tokenStore){
+        SecurityContextUtils.tokenStore=tokenStore;
+    }
+
+    public static  UserInfo getCurrentUserInfo(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null) {
             if (authentication instanceof OAuth2Authentication) {
@@ -54,7 +57,7 @@ public class SecurityContextUtils {
         return null;
     }
 
-    public String getAccessToken(){
+    public static String getAccessToken(){
         Object details = SecurityContextHolder.getContext().getAuthentication().getDetails();
         if (details instanceof OAuth2AuthenticationDetails) {
             String accessToken = ((OAuth2AuthenticationDetails) details).getTokenValue();

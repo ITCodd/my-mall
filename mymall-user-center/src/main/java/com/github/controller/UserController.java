@@ -14,8 +14,13 @@ import javax.validation.constraints.NotEmpty;
 @Slf4j
 public class UserController {
 
-    @PostMapping("/info")
+    @PostMapping("/info2")
     public Object hello(@NotEmpty @Validated String name) {
         return  "Hello "+name;
+    }
+
+    @PostMapping("/info")
+    public Object hello() {
+        return  "Hello";
     }
 }
