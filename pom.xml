@@ -12,7 +12,8 @@
         <module>mymall-common-springboot-starter</module>
         <module>mymall-menu-springboot-starter</module>
 		<module>mymall-user-center</module>
-	</modules>
+        <module>mymall-common</module>
+    </modules>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
