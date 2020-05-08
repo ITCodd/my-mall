@@ -13,6 +13,7 @@ security:
       client-id: c1
       client-secret: 123
       access-token-uri: http://localhost:9001/oauth/token
+      user-authorization-uri: http://localhost:9001/oauth/authorize
     resource:
       jwt:
 #        key-uri: http://localhost:9001/oauth/token_key
