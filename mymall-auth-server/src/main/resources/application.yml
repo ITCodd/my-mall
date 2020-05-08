@@ -71,6 +71,7 @@ security:
     client:
       client-id: auth
       client-secret: 123
+#      registered-redirect-uri: http://www.baidu.com
 
 logging:
   level:

@@ -91,6 +91,7 @@ public class OAuth2WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .formLogin()
                 .loginProcessingUrl("/auth/formLogin")
+//                .loginPage("http://www.qq.com")
                 .successHandler(authenticationSucessHandler())
                 .failureHandler(authenticationFailureHandler())
                 .permitAll()
@@ -98,8 +99,7 @@ public class OAuth2WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .csrf()
                 .disable()
                 .exceptionHandling()
-                .accessDeniedHandler(accessDeniedHandler())
-                .authenticationEntryPoint(authenticationEntryPoint());
+                .accessDeniedHandler(accessDeniedHandler());
 
     }
 
