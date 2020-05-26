@@ -68,18 +68,14 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
         for (Field field : fields) {
             ExcelProperty anno = field.getAnnotation(ExcelProperty.class);
             if(anno!=null){
-                ExcelProperty annotation = field.getAnnotation(ExcelProperty.class);
-                if(annotation!=null){
-                    field.setAccessible(true);
-                    try {
-                        Object o = field.get(data);
-                        if(o!=null){
-                            return false;
-                        }
-                    } catch (Exception e) {
-                        log.info("反射获取数据失败",e);
+                field.setAccessible(true);
+                try {
+                    Object o = field.get(data);
+                    if(o!=null){
+                        return false;
                     }
-
+                } catch (Exception e) {
+                    log.info("反射获取数据失败",e);
                 }
             }
 
@@ -98,7 +94,6 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
     public void onException(Exception exception, AnalysisContext context) throws Exception {
         ExcelErrorMsg errorMsg=new ExcelErrorMsg();
         errorMsg.setRowIndex(context.readRowHolder().getRowIndex());
-
         if(exception instanceof ExcelValidateException){
             ExcelValidateException ev= (ExcelValidateException) exception;
             Object result = context.readRowHolder().getCurrentRowAnalysisResult();
@@ -135,10 +130,49 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
                 }
             }
             errorMsg.setRowData(map);
+        }else if(exception instanceof EasyExcelCommonException){
+            EasyExcelCommonException ev= (EasyExcelCommonException) exception;
+            errorMsg.setRowData(ev.getRowData());
+            Object cellData=getCellData(ev);
+            ExcelValidateMsg msg=new ExcelValidateMsg(errorMsg.getRowIndex(),ev.getColIndex(),cellData,ev.getMessage());
+            List<ExcelValidateMsg> list = new ArrayList<>();
+            list.add(msg);
+            errorMsg.setErrors(list);
         }else{
             errorMsg.setRowData(exception.getMessage());
         }
         errors.add(errorMsg);
+    }
+
+    private Object getCellData(EasyExcelCommonException ev) throws NoSuchFieldException {
+        if(StringUtils.isNotBlank(ev.getFiledName())){
+            Field field = ev.getRowData().getClass().getDeclaredField(ev.getFiledName());
+            ExcelProperty anno = field.getAnnotation(ExcelProperty.class);
+            if(anno!=null){
+                field.setAccessible(true);
+                try {
+                    ev.setColIndex(anno.index());
+                    return field.get(ev.getRowData());
+                } catch (Exception e) {
+                    log.info("反射获取数据失败",e);
+                    return null;
+                }
+            }
+        }
+        Field[] fields = ev.getRowData().getClass().getDeclaredFields();
+        for (Field field : fields) {
+            ExcelProperty anno = field.getAnnotation(ExcelProperty.class);
+            if(anno!=null&&anno.index()==ev.getColIndex()){
+                field.setAccessible(true);
+                try {
+                    return field.get(ev.getRowData());
+                } catch (Exception e) {
+                    log.info("反射获取数据失败",e);
+                }
+            }
+
+        }
+        return null;
     }
 
 
