@@ -121,8 +121,9 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
                             map.put(field.getName(),cellData.getStringValue());
                         }else if(cellData.getType()== CellDataTypeEnum.NUMBER){
                             map.put(field.getName(),cellData.getNumberValue());
+                        }else{
+                            map.put(field.getName(),cellData.getData());
                         }
-
                     }else{
                         map.put(field.getName(),null);
                     }
