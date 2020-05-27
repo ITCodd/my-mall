@@ -2,6 +2,7 @@ package com.github.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.context.AnalysisContext;
+import com.alibaba.excel.enums.CellDataTypeEnum;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.alibaba.excel.exception.ExcelDataConvertException;
 import com.alibaba.excel.metadata.CellData;
@@ -53,6 +54,8 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
     @Getter
     private volatile AtomicInteger total=new AtomicInteger();
 
+    private Set<Integer> rowSkipRow=new HashSet<>();
+
     @Override
     public void invoke(E data, AnalysisContext context) {
         //判断是否开启空行过滤
@@ -90,6 +93,7 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
+        total.addAndGet(rowSkipRow.size());
         if(handler.isBacthProcess()){
             ExcelProcessContext<E> excelContext=new ExcelProcessContext();
             excelContext.setContext(analysisContext);
@@ -122,7 +126,14 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
             errorCount.addAndGet(list.size());
         }else if(exception instanceof ExcelDataConvertException){
             ExcelDataConvertException ev= (ExcelDataConvertException) exception;
-            ExcelValidateMsg msg=new ExcelValidateMsg(ev.getRowIndex(),ev.getColumnIndex(),ev.getCellData().getStringValue(),ev.getMessage());
+            Field errField = ev.getExcelContentProperty().getField();
+            ExcelDataConvertMsg anno = errField.getAnnotation(ExcelDataConvertMsg.class);
+            String message=ev.getMessage();
+            if(anno!=null){
+                message=anno.message();
+            }
+            rowSkipRow.add(ev.getRowIndex());
+            ExcelValidateMsg msg=new ExcelValidateMsg(ev.getRowIndex(),ev.getColumnIndex(),ev.getCellData().getStringValue(),message);
             List<ExcelValidateMsg> list = new ArrayList<>();
             list.add(msg);
             errorMsg.setErrors(list);
@@ -135,7 +146,15 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
                 if(annotation!=null){
                     CellData cellData = result.get(annotation.index());
                     if(cellData!=null){
-                        map.put(field.getName(),cellData.getData());
+                        if(cellData.getType()== CellDataTypeEnum.BOOLEAN){
+                            map.put(field.getName(),cellData.getBooleanValue());
+                        }else if(cellData.getType()== CellDataTypeEnum.STRING){
+                            map.put(field.getName(),cellData.getStringValue());
+                        }else if(cellData.getType()== CellDataTypeEnum.NUMBER){
+                            map.put(field.getName(),cellData.getNumberValue());
+                        }else{
+                            map.put(field.getName(),cellData.getData());
+                        }
                     }else{
                         map.put(field.getName(),null);
                     }
