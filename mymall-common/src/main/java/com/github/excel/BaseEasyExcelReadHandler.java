@@ -90,6 +90,7 @@ public abstract class BaseEasyExcelReadHandler<E> implements EasyExcelProcess,Ea
         }else{
             result.setSucNUm(listener.getIncr().get());
         }
+        result.setTotal(listener.getTotal().get());
         result.setErrorCount(listener.getErrorCount().get());
         result.setErrors(errorMsgs);
         result.setResults(listener.getResults());

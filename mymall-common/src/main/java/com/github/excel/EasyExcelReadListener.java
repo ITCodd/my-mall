@@ -50,6 +50,9 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
     private volatile AtomicInteger incr=new AtomicInteger();
     @Getter
     private volatile AtomicInteger errorCount=new AtomicInteger();
+    @Getter
+    private volatile AtomicInteger total=new AtomicInteger();
+
     @Override
     public void invoke(E data, AnalysisContext context) {
         //判断是否开启空行过滤
@@ -59,6 +62,7 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
                 return;
             }
         }
+        total.incrementAndGet();
         //对数据进行校验
         validate(data, context);
         if(!handler.isBacthProcess()){
@@ -92,7 +96,7 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
             excelContext.setParams(params);
             excelContext.setItems(preCheckItems);
             //预校验检查
-            ExcelPreCheckResult checkResult = handler.preProcess(excelContext);
+            ExcelPreCheckResult<E> checkResult = handler.preProcess(excelContext);
             if(checkResult==null||checkResult.isPass()){
                 handler.process(results,params);
                 //统计成功导入的个数
@@ -220,25 +224,27 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
         }
     }
 
-    private void handlePreCheckResult(ExcelPreCheckResult checkResult) {
+    private void handlePreCheckResult(ExcelPreCheckResult<E> checkResult) {
         if(CollectionUtils.isNotEmpty(checkResult.getErrors())){
 
-            Map<Integer, List<ExcelPreCheckMsg>> listMap = checkResult.getErrors().stream()
+            Map<Integer, List<ExcelPreCheckMsg<E>>> listMap = checkResult.getErrors().stream()
                     .collect(Collectors.groupingBy(item -> item.getItem().getRowIndex()));
             listMap.keySet().forEach(rowIndex->{
                 ExcelErrorMsg errorMsg=new ExcelErrorMsg();
-                List<ExcelPreCheckMsg> checkMsgs = listMap.get(rowIndex);
-                errorMsg.setRowData(checkMsgs.get(0));
+                List<ExcelPreCheckMsg<E>> checkMsgs = listMap.get(rowIndex);
+                errorMsg.setRowData(checkMsgs.get(0).getItem().getData());
                 errorMsg.setRowIndex(rowIndex);
                 List<ExcelValidateMsg> list=new ArrayList<>();
-                for (ExcelPreCheckMsg checkMsg : checkMsgs) {
+                errorMsg.setErrors(list);
+                for (ExcelPreCheckMsg<E> checkMsg : checkMsgs) {
                     if(StringUtils.isNotBlank(checkMsg.getFieldName())){
                         try {
-                            Field field = checkMsg.getItem().getClass().getDeclaredField(checkMsg.getFieldName());
+                            E data = checkMsg.getItem().getData();
+                            Field field = data.getClass().getDeclaredField(checkMsg.getFieldName());
                             ExcelProperty anno = field.getAnnotation(ExcelProperty.class);
                             if(anno!=null){
                                 field.setAccessible(true);
-                                ExcelValidateMsg excelValidateMsg = new ExcelValidateMsg(rowIndex, anno.index(), field.get(checkMsg.getItem()), checkMsg.getMessage());
+                                ExcelValidateMsg excelValidateMsg = new ExcelValidateMsg(rowIndex, anno.index(), field.get(data), checkMsg.getMessage());
                                 list.add(excelValidateMsg);
                             }
                         } catch (Exception e) {

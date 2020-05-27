@@ -10,7 +10,7 @@ import java.util.List;
  * Description:
  */
 @Data
-public class ExcelPreCheckResult {
+public class ExcelPreCheckResult<E> {
     private boolean pass;
-    private List<ExcelPreCheckMsg> errors;
+    private List<ExcelPreCheckMsg<E>> errors;
 }

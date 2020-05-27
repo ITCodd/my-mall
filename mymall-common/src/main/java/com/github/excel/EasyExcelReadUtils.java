@@ -51,6 +51,7 @@ public class EasyExcelReadUtils {
         }else{
             result.setSucNUm(listener.getIncr().get());
         }
+        result.setTotal(listener.getTotal().get());
         result.setErrorCount(listener.getErrorCount().get());
         result.setErrors(errorMsgs);
         result.setResults(listener.getResults());
