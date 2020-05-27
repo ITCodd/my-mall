@@ -2,7 +2,6 @@ package com.github.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.context.AnalysisContext;
-import com.alibaba.excel.enums.CellDataTypeEnum;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.alibaba.excel.exception.ExcelDataConvertException;
 import com.alibaba.excel.metadata.CellData;
@@ -10,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.ConstraintViolation;
@@ -17,10 +17,9 @@ import javax.validation.Path;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 //@Component
 //注入其他类会多例，但是同个类的不同方法调用，或同一个方法调用多次还是同一个实例，
@@ -43,11 +42,17 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
     @Getter
     private List<E> results = new ArrayList<>();
 
+    private List<ExcelPreCheckItem<E>> preCheckItems = new ArrayList<>();
+
     @Getter
     private List<ExcelErrorMsg> errors=new ArrayList<>();
-
+    @Getter
+    private volatile AtomicInteger incr=new AtomicInteger();
+    @Getter
+    private volatile AtomicInteger errorCount=new AtomicInteger();
     @Override
     public void invoke(E data, AnalysisContext context) {
+        //判断是否开启空行过滤
         if(handler.skipSpaceRow()){
             boolean spaceRow = isSpaceRow(data);
             if(spaceRow){
@@ -57,36 +62,44 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
         //对数据进行校验
         validate(data, context);
         if(!handler.isBacthProcess()){
-            handler.process(data,params);
+            ExcelProcessContext<E> excelContext=new ExcelProcessContext<E>();
+            excelContext.setContext(context);
+            excelContext.setParams(params);
+            excelContext.setItem(new ExcelPreCheckItem<E>(context.readRowHolder().getRowIndex(),data));
+            //预校验检查
+            ExcelPreCheckResult checkResult = handler.preProcess(excelContext);
+            if(checkResult==null||checkResult.isPass()){
+                handler.process(data,params);
+                //统计成功导入的个数
+                incr.incrementAndGet();
+            }else{
+                handlePreCheckResult(checkResult);
+            }
+
         }else{
+            preCheckItems.add(new ExcelPreCheckItem<E>(context.readRowHolder().getRowIndex(),data));
             results.add(data);
         }
     }
 
-    private boolean isSpaceRow(E data) {
-        Field[] fields = data.getClass().getDeclaredFields();
-        for (Field field : fields) {
-            ExcelProperty anno = field.getAnnotation(ExcelProperty.class);
-            if(anno!=null){
-                field.setAccessible(true);
-                try {
-                    Object o = field.get(data);
-                    if(o!=null){
-                        return false;
-                    }
-                } catch (Exception e) {
-                    log.info("反射获取数据失败",e);
-                }
-            }
 
-        }
-        return true;
-    }
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if(handler.isBacthProcess()){
-            handler.process(results,params);
+            ExcelProcessContext<E> excelContext=new ExcelProcessContext();
+            excelContext.setContext(analysisContext);
+            excelContext.setParams(params);
+            excelContext.setItems(preCheckItems);
+            //预校验检查
+            ExcelPreCheckResult checkResult = handler.preProcess(excelContext);
+            if(checkResult==null||checkResult.isPass()){
+                handler.process(results,params);
+                //统计成功导入的个数
+                incr.incrementAndGet();
+            }else{
+                handlePreCheckResult(checkResult);
+            }
         }
     }
 
@@ -94,12 +107,15 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
     public void onException(Exception exception, AnalysisContext context) throws Exception {
         ExcelErrorMsg errorMsg=new ExcelErrorMsg();
         errorMsg.setRowIndex(context.readRowHolder().getRowIndex());
+
         if(exception instanceof ExcelValidateException){
             ExcelValidateException ev= (ExcelValidateException) exception;
             Object result = context.readRowHolder().getCurrentRowAnalysisResult();
             errorMsg.setRowData(result);
             List<ExcelValidateMsg> list = ev.getList();
             errorMsg.setErrors(list);
+            //统计异常的次数
+            errorCount.addAndGet(list.size());
         }else if(exception instanceof ExcelDataConvertException){
             ExcelDataConvertException ev= (ExcelDataConvertException) exception;
             ExcelValidateMsg msg=new ExcelValidateMsg(ev.getRowIndex(),ev.getColumnIndex(),ev.getCellData().getStringValue(),ev.getMessage());
@@ -115,15 +131,7 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
                 if(annotation!=null){
                     CellData cellData = result.get(annotation.index());
                     if(cellData!=null){
-                        if(cellData.getType()== CellDataTypeEnum.BOOLEAN){
-                            map.put(field.getName(),cellData.getBooleanValue());
-                        }else if(cellData.getType()== CellDataTypeEnum.STRING){
-                            map.put(field.getName(),cellData.getStringValue());
-                        }else if(cellData.getType()== CellDataTypeEnum.NUMBER){
-                            map.put(field.getName(),cellData.getNumberValue());
-                        }else{
-                            map.put(field.getName(),cellData.getData());
-                        }
+                        map.put(field.getName(),cellData.getData());
                     }else{
                         map.put(field.getName(),null);
                     }
@@ -131,6 +139,8 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
                 }
             }
             errorMsg.setRowData(map);
+            //统计异常的次数
+            errorCount.addAndGet(list.size());
         }else if(exception instanceof EasyExcelCommonException){
             EasyExcelCommonException ev= (EasyExcelCommonException) exception;
             errorMsg.setRowData(ev.getRowData());
@@ -139,8 +149,11 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
             List<ExcelValidateMsg> list = new ArrayList<>();
             list.add(msg);
             errorMsg.setErrors(list);
+            //统计异常的次数
+            errorCount.addAndGet(list.size());
         }else{
             errorMsg.setRowData(exception.getMessage());
+            errorCount.incrementAndGet();
         }
         errors.add(errorMsg);
     }
@@ -207,5 +220,60 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
         }
     }
 
+    private void handlePreCheckResult(ExcelPreCheckResult checkResult) {
+        if(CollectionUtils.isNotEmpty(checkResult.getErrors())){
+
+            Map<Integer, List<ExcelPreCheckMsg>> listMap = checkResult.getErrors().stream()
+                    .collect(Collectors.groupingBy(item -> item.getItem().getRowIndex()));
+            listMap.keySet().forEach(rowIndex->{
+                ExcelErrorMsg errorMsg=new ExcelErrorMsg();
+                List<ExcelPreCheckMsg> checkMsgs = listMap.get(rowIndex);
+                errorMsg.setRowData(checkMsgs.get(0));
+                errorMsg.setRowIndex(rowIndex);
+                List<ExcelValidateMsg> list=new ArrayList<>();
+                for (ExcelPreCheckMsg checkMsg : checkMsgs) {
+                    if(StringUtils.isNotBlank(checkMsg.getFieldName())){
+                        try {
+                            Field field = checkMsg.getItem().getClass().getDeclaredField(checkMsg.getFieldName());
+                            ExcelProperty anno = field.getAnnotation(ExcelProperty.class);
+                            if(anno!=null){
+                                field.setAccessible(true);
+                                ExcelValidateMsg excelValidateMsg = new ExcelValidateMsg(rowIndex, anno.index(), field.get(checkMsg.getItem()), checkMsg.getMessage());
+                                list.add(excelValidateMsg);
+                            }
+                        } catch (Exception e) {
+                            log.info("反射获取数据失败",e);
+                        }
+
+                    }
+
+                }
+                errors.add(errorMsg);
+            });
+
+            //统计异常的次数
+            errorCount.addAndGet(checkResult.getErrors().size());
+        }
+    }
+
+    private boolean isSpaceRow(E data) {
+        Field[] fields = data.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            ExcelProperty anno = field.getAnnotation(ExcelProperty.class);
+            if(anno!=null){
+                field.setAccessible(true);
+                try {
+                    Object o = field.get(data);
+                    if(o!=null){
+                        return false;
+                    }
+                } catch (Exception e) {
+                    log.info("反射获取数据失败",e);
+                }
+            }
+
+        }
+        return true;
+    }
 
 }

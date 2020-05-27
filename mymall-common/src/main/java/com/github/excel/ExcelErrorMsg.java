@@ -9,5 +9,4 @@ public class ExcelErrorMsg {
     private Integer rowIndex;
     private Object rowData;
     private List<ExcelValidateMsg> errors;
-
 }

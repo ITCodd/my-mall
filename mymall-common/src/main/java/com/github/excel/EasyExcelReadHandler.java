@@ -14,6 +14,9 @@ public interface EasyExcelReadHandler<E> {
     public  boolean isBacthProcess();
 
     public  boolean skipSpaceRow();
+
+    public ExcelPreCheckResult preProcess(ExcelProcessContext<E> context);
+
     /**
      * @Accessors(chain = true)类上的这个注解和easyexcel冲突
      * 获取到对象时里面的数据都是空的，要把对象这个注解去掉
@@ -21,6 +24,7 @@ public interface EasyExcelReadHandler<E> {
      * @param params
      */
     public void process(E data, Object params);
+
 
     public void process(List<E> datas, Object params);
 

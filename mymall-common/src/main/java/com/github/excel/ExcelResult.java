@@ -14,6 +14,7 @@ import java.util.List;
 public class ExcelResult {
 
     private List<?> results = new ArrayList<>();
-
+    private Integer sucNUm;
+    private Integer errorCount;
     private List<ExcelErrorMsg> errors=new ArrayList<>();
 }

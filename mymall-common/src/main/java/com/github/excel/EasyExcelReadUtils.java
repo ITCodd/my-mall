@@ -5,7 +5,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +46,12 @@ public class EasyExcelReadUtils {
         }
         List<ExcelErrorMsg> errorMsgs = map.values().stream().collect(Collectors.toList());
         ExcelResult result=new ExcelResult();
+        if(handler.isBacthProcess()){
+            result.setSucNUm(listener.getResults().size()-errorMsgs.size());
+        }else{
+            result.setSucNUm(listener.getIncr().get());
+        }
+        result.setErrorCount(listener.getErrorCount().get());
         result.setErrors(errorMsgs);
         result.setResults(listener.getResults());
         return result;
