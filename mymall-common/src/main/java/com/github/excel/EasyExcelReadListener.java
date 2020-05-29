@@ -38,6 +38,7 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
 
     @Setter
     private Object params;
+
     @Setter
     @Getter
     private List<ExcelRowItem<E>> rowItems = new ArrayList<>();
@@ -137,11 +138,11 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
             LinkedHashMap<Integer, CellData> result = (LinkedHashMap) context.readRowHolder().getCurrentRowAnalysisResult();
             LinkedHashMap<String,Object> map=new LinkedHashMap<>();
             Field[] fields = handler.getTargetClass().getDeclaredFields();
-            int anon=0;
+            int annIndex=0;
             for (Field field : fields) {
                 ExcelProperty annotation = field.getAnnotation(ExcelProperty.class);
                 if(annotation!=null){
-                    CellData cellData = result.get(anon++);
+                    CellData cellData = result.get(annIndex++);
                     if(cellData!=null){
                         if(cellData.getType()== CellDataTypeEnum.BOOLEAN){
                             map.put(field.getName(),cellData.getBooleanValue());
@@ -172,7 +173,12 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
             //统计异常的次数
             errorCount.addAndGet(list.size());
         }else{
-            errorMsg.setRowData(exception.getMessage());
+            ExcelValidateMsg msg=new ExcelValidateMsg(errorMsg.getRowIndex(),exception.getMessage());
+            List<ExcelValidateMsg> list = new ArrayList<>();
+            list.add(msg);
+            errorMsg.setErrors(list);
+            Object result = context.readRowHolder().getCurrentRowAnalysisResult();
+            errorMsg.setRowData(result);
             errorCount.incrementAndGet();
         }
         errors.add(errorMsg);
@@ -192,6 +198,9 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
                     return null;
                 }
             }
+        }
+        if(ev.getColIndex()==-1){
+            return null;
         }
         Field[] fields = ev.getRowData().getClass().getDeclaredFields();
         for (Field field : fields) {
@@ -267,6 +276,9 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
                             log.info("反射获取数据失败",e);
                         }
 
+                    }else{
+                        ExcelValidateMsg excelValidateMsg = new ExcelValidateMsg(rowIndex, checkMsg.getMessage());
+                        list.add(excelValidateMsg);
                     }
 
                 }

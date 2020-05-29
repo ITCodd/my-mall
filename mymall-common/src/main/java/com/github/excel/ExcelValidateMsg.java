@@ -16,4 +16,9 @@ public class ExcelValidateMsg {
     private Object cellData;
 
     private String message;
+
+    public ExcelValidateMsg(Integer rowIndex, String message) {
+        this.rowIndex = rowIndex;
+        this.message = message;
+    }
 }

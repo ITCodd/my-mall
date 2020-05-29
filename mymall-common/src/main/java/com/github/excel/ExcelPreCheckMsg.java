@@ -30,4 +30,9 @@ public class ExcelPreCheckMsg<E> {
         this.fieldName = fieldName;
         this.message = message;
     }
+
+    public ExcelPreCheckMsg(ExcelRowItem<E> item, String message) {
+        this.item = item;
+        this.message = message;
+    }
 }
