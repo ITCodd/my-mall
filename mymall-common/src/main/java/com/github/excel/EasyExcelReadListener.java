@@ -38,12 +38,9 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
 
     @Setter
     private Object params;
-
     @Setter
     @Getter
-    private List<E> results = new ArrayList<>();
-
-    private List<ExcelPreCheckItem<E>> preCheckItems = new ArrayList<>();
+    private List<ExcelRowItem<E>> rowItems = new ArrayList<>();
 
     @Getter
     private List<ExcelErrorMsg> errors=new ArrayList<>();
@@ -72,11 +69,11 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
             ExcelProcessContext<E> excelContext=new ExcelProcessContext<E>();
             excelContext.setContext(context);
             excelContext.setParams(params);
-            excelContext.setItem(new ExcelPreCheckItem<E>(context.readRowHolder().getRowIndex(),data));
+            excelContext.setItem(new ExcelRowItem<E>(context.readRowHolder().getRowIndex(),data));
             //预校验检查
             ExcelPreCheckResult checkResult = handler.preProcess(excelContext);
             if(checkResult==null||checkResult.isPass()){
-                handler.process(data,params);
+                handler.process(excelContext);
                 //统计成功导入的个数
                 incr.incrementAndGet();
             }else{
@@ -84,8 +81,7 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
             }
 
         }else{
-            preCheckItems.add(new ExcelPreCheckItem<E>(context.readRowHolder().getRowIndex(),data));
-            results.add(data);
+            rowItems.add(new ExcelRowItem<E>(context.readRowHolder().getRowIndex(),data));
         }
     }
 
@@ -98,11 +94,11 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
             ExcelProcessContext<E> excelContext=new ExcelProcessContext();
             excelContext.setContext(analysisContext);
             excelContext.setParams(params);
-            excelContext.setItems(preCheckItems);
+            excelContext.setItems(rowItems);
             //预校验检查
             ExcelPreCheckResult<E> checkResult = handler.preProcess(excelContext);
             if(checkResult==null||checkResult.isPass()){
-                handler.process(results,params);
+                handler.process(excelContext);
                 //统计成功导入的个数
                 incr.incrementAndGet();
             }else{
@@ -141,10 +137,11 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
             LinkedHashMap<Integer, CellData> result = (LinkedHashMap) context.readRowHolder().getCurrentRowAnalysisResult();
             LinkedHashMap<String,Object> map=new LinkedHashMap<>();
             Field[] fields = handler.getTargetClass().getDeclaredFields();
+            int anon=0;
             for (Field field : fields) {
                 ExcelProperty annotation = field.getAnnotation(ExcelProperty.class);
                 if(annotation!=null){
-                    CellData cellData = result.get(annotation.index());
+                    CellData cellData = result.get(anon++);
                     if(cellData!=null){
                         if(cellData.getType()== CellDataTypeEnum.BOOLEAN){
                             map.put(field.getName(),cellData.getBooleanValue());

@@ -14,7 +14,7 @@ public class ExcelPreCheckMsg<E> {
     /**
      * 当前行号
      */
-    private ExcelPreCheckItem<E> item;
+    private ExcelRowItem<E> item;
 
     /**
      * 校验的字段名称
@@ -25,7 +25,7 @@ public class ExcelPreCheckMsg<E> {
      */
     private String message;
 
-    public ExcelPreCheckMsg(ExcelPreCheckItem<E> item, String fieldName, String message) {
+    public ExcelPreCheckMsg(ExcelRowItem<E> item, String fieldName, String message) {
         this.item = item;
         this.fieldName = fieldName;
         this.message = message;

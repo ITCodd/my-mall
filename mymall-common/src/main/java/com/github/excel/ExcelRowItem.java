@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-public class ExcelPreCheckItem<E> {
+public class ExcelRowItem<E> {
     /**
      * 当前行号
      */
@@ -21,7 +21,7 @@ public class ExcelPreCheckItem<E> {
     private E data;
 
 
-    public ExcelPreCheckItem(Integer rowIndex, E data) {
+    public ExcelRowItem(Integer rowIndex, E data) {
         this.rowIndex = rowIndex;
         this.data = data;
     }

@@ -45,12 +45,6 @@ public abstract class BaseEasyExcelReadHandler<E> implements EasyExcelProcess,Ea
         return false;
     }
 
-    @Override
-    public abstract void process(E data, Object params);
-
-    @Override
-    public abstract void process(List<E> datas, Object params);
-
 
     @Override
     public ExcelResult handleExcel(MultipartFile file) throws IOException {
@@ -85,15 +79,15 @@ public abstract class BaseEasyExcelReadHandler<E> implements EasyExcelProcess,Ea
         }
         List<ExcelErrorMsg> errorMsgs = map.values().stream().collect(Collectors.toList());
         ExcelResult result=new ExcelResult();
+        result.setTotal(listener.getTotal().get());
+        result.setErrorCount(listener.getErrorCount().get());
         if(this.isBacthProcess()){
-            result.setSucNUm(listener.getResults().size()-errorMsgs.size());
+            result.setSucNUm(listener.getTotal().get()-errorMsgs.size());
         }else{
             result.setSucNUm(listener.getIncr().get());
         }
-        result.setTotal(listener.getTotal().get());
-        result.setErrorCount(listener.getErrorCount().get());
         result.setErrors(errorMsgs);
-        result.setResults(listener.getResults());
+        result.setResults(listener.getRowItems());
         return result;
     }
 }
