@@ -13,6 +13,7 @@
         <module>mymall-menu-springboot-starter</module>
 		<module>mymall-user-center</module>
         <module>mymall-common</module>
+        <module>mymall-workflow</module>
     </modules>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
