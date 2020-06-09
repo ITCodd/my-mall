@@ -41,10 +41,21 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
 
     @Setter
     @Getter
-    private List<ExcelRowItem<E>> rowItems = new ArrayList<>();
+    private boolean onlyCheck;
+
+    @Setter
+    @Getter
+    private ExcelDistinctConf distinctConf;
+
+    @Setter
+    @Getter
+    private List<ExcelPreCheckItem<E>> sucResults = new ArrayList<>();
 
     @Getter
     private List<ExcelErrorMsg> errors=new ArrayList<>();
+    /**
+     * 不是批量导入的情况使用
+     */
     @Getter
     private volatile AtomicInteger incr=new AtomicInteger();
     @Getter
@@ -53,6 +64,8 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
     private volatile AtomicInteger total=new AtomicInteger();
 
     private Set<Integer> rowSkipRow=new HashSet<>();
+
+    private Map<String, Integer> fiterMap=new HashMap<>();
 
     @Override
     public void invoke(E data, AnalysisContext context) {
@@ -66,26 +79,69 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
         total.incrementAndGet();
         //对数据进行校验
         validate(data, context);
+        if(distinctConf!=null){
+            distinct(data, context);
+        }
+        ExcelPreCheckItem<E> preCheckItem = new ExcelPreCheckItem<>(context.readRowHolder().getRowIndex(), data);
+        ExcelProcessContext<E> excelContext=new ExcelProcessContext<E>();
+        excelContext.setContext(context);
+        excelContext.setParams(params);
+        excelContext.setItem(preCheckItem);
+        //预校验检查
+        ExcelPreCheckResult checkResult = handler.preProcess(excelContext);
+        if(checkResult!=null&&checkResult.isPass()){
+            handlePreCheckResult(checkResult);
+            return;
+        }
         if(!handler.isBacthProcess()){
-            ExcelProcessContext<E> excelContext=new ExcelProcessContext<E>();
-            excelContext.setContext(context);
-            excelContext.setParams(params);
-            excelContext.setItem(new ExcelRowItem<E>(context.readRowHolder().getRowIndex(),data));
-            //预校验检查
-            ExcelPreCheckResult checkResult = handler.preProcess(excelContext);
-            if(checkResult==null||checkResult.isPass()){
-                handler.process(excelContext);
+            if(onlyCheck){
+                sucResults.add(preCheckItem);
                 //统计成功导入的个数
                 incr.incrementAndGet();
-            }else{
-                handlePreCheckResult(checkResult);
+                return;
             }
-
+            handler.process(excelContext);
+            //统计成功导入的个数
+            incr.incrementAndGet();
         }else{
-            rowItems.add(new ExcelRowItem<E>(context.readRowHolder().getRowIndex(),data));
+            sucResults.add(preCheckItem);
         }
     }
 
+    private void distinct(E data, AnalysisContext context) {
+        String[] distinctFields = distinctConf.getDistinctFields();
+        if(distinctFields==null||distinctFields.length == 0){
+            return;
+        }
+        int rowIndex=0;
+        if(distinctConf.getDistinctStrategy().getValue() == EXcelDistinctStrategy.ANYONEFIELD.getValue()){
+            for (String distinctField : distinctFields) {
+                Object filedVal = getFiledVal(data, distinctField);
+                String key= distinctField+"-"+filedVal;
+                if(!fiterMap.containsKey(key)){
+                    fiterMap.put(key,context.readRowHolder().getRowIndex());
+                }else{
+                    rowIndex=fiterMap.get(key);
+                    String msg="第"+context.readRowHolder().getRowIndex()+"行的"+filedVal+"与第"+rowIndex+"行的相同";
+                    throw new EasyExcelCommonException(data,distinctField,msg);
+                }
+            }
+        }else{
+            List<String> list=new ArrayList<>();
+            for (String distinctField : distinctFields) {
+                Object filedVal = getFiledVal(data, distinctField);
+                list.add(String.valueOf(filedVal));
+            }
+            String key=StringUtils.join(list,"-");
+            if(!fiterMap.containsKey(key)){
+                fiterMap.put(key,context.readRowHolder().getRowIndex());
+            }else{
+                rowIndex=fiterMap.get(key);
+                String msg="第"+context.readRowHolder().getRowIndex()+"行的"+StringUtils.join(list,",")+"与第"+rowIndex+"行的相同";
+                throw new EasyExcelCommonException(data,msg);
+            }
+        }
+    }
 
 
     @Override
@@ -95,15 +151,14 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
             ExcelProcessContext<E> excelContext=new ExcelProcessContext();
             excelContext.setContext(analysisContext);
             excelContext.setParams(params);
-            excelContext.setItems(rowItems);
+            excelContext.setItems(sucResults);
             //预校验检查
-            ExcelPreCheckResult<E> checkResult = handler.preProcess(excelContext);
-            if(checkResult==null||checkResult.isPass()){
+//            ExcelPreCheckResult<E> checkResult = handler.preProcess(excelContext);
+            if(CollectionUtils.isEmpty(errors)){
+                if(onlyCheck){
+                    return;
+                }
                 handler.process(excelContext);
-                //统计成功导入的个数
-                incr.incrementAndGet();
-            }else{
-                handlePreCheckResult(checkResult);
             }
         }
     }
@@ -199,7 +254,7 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
                 }
             }
         }
-        if(ev.getColIndex()==-1){
+        if(ev.getColIndex()==null||ev.getColIndex()==-1){
             return null;
         }
         Field[] fields = ev.getRowData().getClass().getDeclaredFields();
@@ -308,6 +363,19 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
 
         }
         return true;
+    }
+
+    private Object getFiledVal(E data,String fieldName) {
+        if(StringUtils.isNotBlank(fieldName)){
+            try {
+                Field field = data.getClass().getDeclaredField(fieldName);
+                field.setAccessible(true);
+                return field.get(data);
+            } catch (Exception e) {
+                log.info("反射获取数据失败",e);
+            }
+        }
+        return null;
     }
 
 }

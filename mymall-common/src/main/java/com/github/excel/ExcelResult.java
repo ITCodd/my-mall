@@ -1,6 +1,5 @@
 package com.github.excel;
 
-import com.alibaba.fastjson.annotation.JSONField;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
@@ -16,10 +15,12 @@ import java.util.List;
 public class ExcelResult {
 
     @JsonIgnore
-    @JSONField(serialize = false)
     private List<?> results = new ArrayList<>();
-    private Integer sucNUm;
+    private Integer sucNum;
     private Integer errorCount;
     private Integer total;
+    private String feedbackId;
+    @JsonIgnore
+    private Object params;
     private List<ExcelErrorMsg> errors=new ArrayList<>();
 }

@@ -12,8 +12,8 @@ import java.util.List;
  */
 @Data
 public class ExcelProcessContext<E>{
-    private ExcelRowItem<E> item;
-    private List<ExcelRowItem<E>> items;
+    private ExcelPreCheckItem<E> item;
+    private List<ExcelPreCheckItem<E>> items;
     private Object params;
     private AnalysisContext context;
 }

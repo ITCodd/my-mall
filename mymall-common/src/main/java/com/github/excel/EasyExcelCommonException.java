@@ -27,4 +27,10 @@ public class EasyExcelCommonException extends RuntimeException {
         this.filedName=filedName;
         this.msg=msg;
     }
+
+    public EasyExcelCommonException(Object rowData, String msg){
+        super(msg);
+        this.rowData=rowData;
+        this.msg=msg;
+    }
 }
