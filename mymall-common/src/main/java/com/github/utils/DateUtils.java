@@ -3,7 +3,6 @@ package com.github.utils;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 
 /**
@@ -12,13 +11,7 @@ import java.time.temporal.TemporalAdjusters;
  * */
 public class DateUtils {
 
-    public static final int CURRENT = 0;
-
     public static final int NEXT = 1;
-
-    public static final int PREVIOUS = -1;
-
-    public static final int QUARTER =3;
 
     /**
      * 获取某天的开始日期
@@ -26,9 +19,8 @@ public class DateUtils {
      * @param offset 0今天，1明天，-1昨天，依次类推
      * @return
      */
-    public static LocalDateTime dayStart(int offset) {
-
-        return LocalDateTime.of(LocalDate.now().plusDays(offset), LocalTime.MIN);
+    public static LocalDate dayOffset(int offset) {
+        return LocalDate.now().plusDays(offset);
     }
 
     /**
@@ -37,9 +29,8 @@ public class DateUtils {
      * @param offset 0本周，1下周，-1上周，依次类推
      * @return
      */
-    public static LocalDateTime weekStart(int offset) {
-
-        return LocalDateTime.now().plusWeeks(offset).with(DayOfWeek.MONDAY).minusDays(NEXT);
+    public static LocalDate weekOffset(int offset) {
+        return LocalDate.now().plusWeeks(offset).with(DayOfWeek.MONDAY).minusDays(NEXT);
     }
 
     /**
@@ -48,35 +39,22 @@ public class DateUtils {
      * @param offset 0本月，1下个月，-1上个月，依次类推
      * @return
      */
-    public static LocalDateTime monthStart(int offset) {
-        return LocalDateTime.now().plusMonths(offset).with(TemporalAdjusters.firstDayOfMonth()).minusDays(NEXT);
+    public static LocalDate monthOffset(int offset) {
+        return LocalDate.now().plusMonths(offset).with(TemporalAdjusters.firstDayOfMonth());
     }
 
 
     /**
      * 获取某季度的开始日期
-     * 季度一年四季， 第一季度：2月-4月， 第二季度：5月-7月， 第三季度：8月-10月， 第四季度：11月-1月
      *
      * @param offset 0本季度，1下个季度，-1上个季度，依次类推
      * @return
      */
-    public static LocalDateTime quarterStart(int offset) {
-        final LocalDateTime date = LocalDateTime.now().plusMonths(offset * 3);
+    public static LocalDate quarterOffset(int offset) {
+        final LocalDate date = LocalDate.now();
         int month = date.getMonth().getValue();//当月
-        int start = 0;
-        if (month >= 2 && month <= 4) {//第一季度
-            start = 2;
-        } else if (month >= 5 && month <= 7) {//第二季度
-            start = 5;
-        } else if (month >= 8 && month <= 10) {//第三季度
-            start = 8;
-        } else if ((month >= 11 && month <= 12)) {//第四季度
-            start = 11;
-        } else if (month == 1) {//第四季度
-            start = 11;
-            month = 13;
-        }
-        return date.plusMonths(start - month).with(TemporalAdjusters.firstDayOfMonth()).minusDays(NEXT);
+        int start =(month - 1) / 3 ;
+        return LocalDate.now().with(TemporalAdjusters.firstDayOfYear()).plusMonths(start * 3).plusMonths(offset * 3);
     }
 
     /**
@@ -85,25 +63,25 @@ public class DateUtils {
      * @param offset 0今年，1明年，-1去年，依次类推
      * @return
      */
-    public static LocalDateTime yearStart(int offset) {
-        return LocalDateTime.now().plusYears(offset).with(TemporalAdjusters.firstDayOfYear());
+    public static LocalDate yearOffset(int offset) {
+        return LocalDate.now().plusYears(offset).with(TemporalAdjusters.firstDayOfYear());
     }
 
     public static void main(String[] args) {
 
-        System.out.println("当天开始时间>>>"+dayStart(CURRENT));
-        System.out.println("当天结束时间>>>"+dayStart(NEXT));
+        System.out.println("当天开始时间>>>"+ dayOffset(0));
+        System.out.println("当天结束时间>>>"+ dayOffset(-1));
 
-        System.out.println("本周开始时间>>>"+weekStart(CURRENT));
-        System.out.println("本周结束时间>>>"+weekStart(NEXT));
+        System.out.println("本周开始时间>>>"+ weekOffset(0));
+        System.out.println("本周结束时间>>>"+ weekOffset(-1));
 
-        System.out.println("本月开始时间>>>"+monthStart(CURRENT));
-        System.out.println("本月结束时间>>>"+monthStart(NEXT));
+        System.out.println("本月开始时间>>>"+ monthOffset(0));
+        System.out.println("本月结束时间>>>"+ monthOffset(1));
 
-        System.out.println("本年开始时间>>>"+yearStart(CURRENT));
-        System.out.println("本年结束时间>>>"+yearStart(NEXT));
+        System.out.println("本年开始时间>>>"+ yearOffset(0));
+        System.out.println("本年结束时间>>>"+ yearOffset(1));
 
-        System.out.println("本季度开始时间>>>"+quarterStart(CURRENT));
-        System.out.println("本季度结束时间>>>"+quarterStart(NEXT));
+        System.out.println("本季度开始时间>>>"+ quarterOffset(0));
+        System.out.println("本季度结束时间>>>"+ quarterOffset(1));
     }
 }
