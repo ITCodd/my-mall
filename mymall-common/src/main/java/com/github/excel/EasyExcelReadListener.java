@@ -89,7 +89,7 @@ public class EasyExcelReadListener<E> extends AnalysisEventListener<E> {
         excelContext.setItem(preCheckItem);
         //预校验检查
         ExcelPreCheckResult checkResult = handler.preProcess(excelContext);
-        if(checkResult!=null&&checkResult.isPass()){
+        if(checkResult!=null&&!checkResult.isPass()){
             handlePreCheckResult(checkResult);
             return;
         }

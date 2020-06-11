@@ -7,15 +7,27 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorOutputStream;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -219,21 +231,90 @@ public class FileCompressUtil {
         }
         return ret;
     }
-     
+
+    private static List<File> getFiles(File file) throws IOException {
+        List<File> files=new ArrayList<>();
+        Queue<File> queue=new LinkedBlockingQueue<File>();
+        queue.add(file);
+        while (!queue.isEmpty()){
+            File f = queue.poll();
+            if(f!=file){
+                files.add(f);
+            }
+            if(!f.isFile()){
+                File[] listFiles = f.listFiles();
+                if(listFiles!=null&&listFiles.length!=0){
+                    for (File listFile : listFiles) {
+                        queue.add(listFile);
+                    }
+                }
+            }
+        }
+        return files;
+    }
+
+    public static void compressGzip(File dir,File outFile) throws IOException{
+        OutputStream myOutputStream=new FileOutputStream(outFile);
+        GzipParameters parameters=new GzipParameters();
+        parameters.setFilename(FilenameUtils.getName(outFile.getName()));
+        OutputStream compressorOutputStream = new GzipCompressorOutputStream(myOutputStream,parameters);
+        compress(dir, compressorOutputStream);
+        myOutputStream.close();
+    }
+
+    public static void doCompress(File dir,File outFile,String type) throws IOException, CompressorException {
+        if(StringUtils.equals(type,"gz")){
+            compressGzip(dir,outFile);
+        }else{
+            OutputStream myOutputStream=new FileOutputStream(outFile);
+            CompressorOutputStream compressorOutputStream = new CompressorStreamFactory()
+                    .createCompressorOutputStream(type, myOutputStream);
+            compress(dir, compressorOutputStream);
+            myOutputStream.close();
+        }
+
+    }
+
+    private static void compress(File dir, OutputStream compressorOutputStream) throws IOException {
+        List<File> files = getFiles(dir);
+        String dirPath = dir.getAbsolutePath();
+        try (ArchiveOutputStream o = new TarArchiveOutputStream(compressorOutputStream)) {
+            for (File f : files) {
+                String filePath=f.getAbsolutePath();
+                ArchiveEntry entry = o.createArchiveEntry(f, filePath.substring(dirPath.length() + 1));
+                o.putArchiveEntry(entry);
+                if (f.isFile()) {
+                    try (InputStream i = Files.newInputStream(f.toPath())) {
+                        IOUtils.copy(i, o);
+                    }
+                }
+                o.closeArchiveEntry();
+            }
+            o.finish();
+        }
+        compressorOutputStream.close();
+    }
+
     public static void main(String[] args) throws Exception {
-    	
-    	
+        File dir = new File("C:\\Users\\DELL\\Desktop\\博纳德\\薪公章\\笔记");
+        List<File> files = getFiles(dir);
+        for (File file : files) {
+            System.out.println("file = " + file.getAbsolutePath());
+        }
+
+//        File outFile=new File("E:\\var\\2.bzip2");
+//        doCompress(dir,outFile,"bzip2");
 //        System.out.println(unZip("F:\\data_detail\\MRO_ZTE_20170816150000.zip", null));
 //        System.out.println(unTar("F:\\fileupload\\中文test.tar", "F:\\fileupload\\"));
          
         //System.out.println(unBZip2("F:\\fileupload\\中文test.xml.bz2", "F:\\fileupload\\"));
-        //System.out.println(unTarBZip2("F:\\fileupload\\中文test.tar.bz2", "F:\\fileupload\\"));
+        System.out.println(unTarBZip2("E:\\var\\2.bzip2", "E:\\var\\out"));
          
 //        System.out.println(unTarGZ("F:\\data_detail\\zookeeper-3.4.10.tar.gz", null));
         //System.out.println(unTarGZ("F:\\fileupload\\all.tar.gz", "F:\\fileupload\\"));
-    	List<String> list = unZip("D:\\server\\server\\apache-tomcat-7.0.86-windows-x64.zip", "F:\\360Downloads\\unzip");
-    	for (String f : list) {
-			System.out.println(f);
-		}
+//    	List<String> list = unZip("D:\\server\\server\\apache-tomcat-7.0.86-windows-x64.zip", "F:\\360Downloads\\unzip");
+//    	for (String f : list) {
+//			System.out.println(f);
+//		}
     }
 }
