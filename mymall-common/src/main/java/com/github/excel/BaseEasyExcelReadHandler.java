@@ -209,7 +209,9 @@ public abstract class BaseEasyExcelReadHandler<E> implements InitializingBean, E
                                     result.setErrorCount(count);
                                 });
                 }
+                result.getErrors().addAll(newError);
             }
+
         }
         return result;
     }
