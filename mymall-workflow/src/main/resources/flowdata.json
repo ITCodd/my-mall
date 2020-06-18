@@ -1,0 +1,132 @@
+{
+    "flowNode": {
+        "type": "start",
+        "content": "",
+        "title": "发起人"
+    },
+    "conditionNodes": [
+        {
+            "type": "condition",
+            "content": "[学历 = 博士生]",
+            "title": "aaa",
+            "flowNode": {
+                "assignees":[
+                    {
+                        "userId":"1",
+                        "userName":"张三"
+                    },
+                    {
+                        "userId":"2",
+                        "userName":"李四"
+                    }
+                ],
+                "title": "审批人",
+                "type": "approver",
+                "assigneeType": "user",
+                "signType":"会签"
+            },
+             "flowNode": {
+                "assignees":[
+                    {
+                        "userId":"1",
+                        "userName":"张三"
+                    },
+                    {
+                        "userId":"2",
+                        "userName":"李四"
+                    }
+                ],
+                "title": "抄送人",
+                "type": "copy",
+                "assigneeType": "user"
+            }
+        },
+        {
+
+            "type": "condition",
+            "content": "[年龄 > 30]",
+            "title": "aaa",
+            "flowNode": {
+                "assignees":[
+                    {
+                        "userId":"3",
+                        "userName":"王五"
+                    },
+                    {
+                        "userId":"4",
+                        "userName":"赵六"
+                    }
+                ],
+                "title": "审批人",
+                "type": "approver",
+                "assigneeType": "user",
+                "signType":"或签"
+            },
+            "conditionNodes": [
+                {
+                    "type": "condition",
+                    "content": "[学历 = 博士生]",
+                    "title": "aaa",
+                    "flowNode": {
+                        "assignees":[
+                            {
+                                "userId":"1",
+                                "userName":"张三"
+                            },
+                            {
+                                "userId":"2",
+                                "userName":"李四"
+                            }
+                        ],
+                        "title": "审批人",
+                        "type": "approver",
+                        "assigneeType": "user",
+                        "signType":"会签"
+                    },
+                     "flowNode": {
+                        "assignees":[
+                            {
+                                "userId":"1",
+                                "userName":"张三"
+                            },
+                            {
+                                "userId":"2",
+                                "userName":"李四"
+                            }
+                        ],
+                        "title": "抄送人",
+                        "type": "copy",
+                        "assigneeType": "user"
+                    }
+                },
+                {
+        
+                    "type": "condition",
+                    "content": "[年龄 > 30]",
+                    "title": "aaa",
+                    "flowNode": {
+                        "assignees":[
+                            {
+                                "userId":"3",
+                                "userName":"王五"
+                            },
+                            {
+                                "userId":"4",
+                                "userName":"赵六"
+                            }
+                        ],
+                        "title": "审批人",
+                        "type": "approver",
+                        "assigneeType": "user",
+                        "signType":"或签"
+                    }
+                }
+            ]
+        }
+    ],
+    "flowNode": {
+        "content": "",
+        "title": "结束",
+        "type": "end"
+    }
+}
