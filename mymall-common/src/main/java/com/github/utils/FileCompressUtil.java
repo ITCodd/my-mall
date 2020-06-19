@@ -245,7 +245,7 @@ public class FileCompressUtil {
                 File[] listFiles = f.listFiles();
                 if(listFiles!=null&&listFiles.length!=0){
                     for (File listFile : listFiles) {
-                        queue.add(listFile);
+                        queue.offer(listFile);
                     }
                 }
             }
@@ -296,7 +296,7 @@ public class FileCompressUtil {
     }
 
     public static void main(String[] args) throws Exception {
-        File dir = new File("C:\\Users\\DELL\\Desktop\\博纳德\\薪公章\\笔记");
+        File dir = new File("C:\\Users\\DELL\\Desktop\\笔记");
         List<File> files = getFiles(dir);
         for (File file : files) {
             System.out.println("file = " + file.getAbsolutePath());
