@@ -56,7 +56,7 @@ public class ActivitiUtils {
     }
 
     /*任务节点*/
-    public static UserTask createUserTaskAssignee(String id, String assignee, String name) {
+    public static UserTask createUserTaskAssignee(String id, String name, String assignee) {
         UserTask userTask = new UserTask();
         userTask.setId(id);
         userTask.setName(name);

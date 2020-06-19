@@ -1,132 +1,105 @@
 {
-    "flowNode": {
-        "type": "start",
-        "content": "",
-        "title": "发起人"
+  "basic": {
+    "flowGroup": 2,
+    "flowImg": 0,
+    "flowName": "入职",
+    "flowRemark": "简单入职背景填写"
+  },
+  "flowNodes": [
+    {
+      "content": "",
+      "title": "结束",
+      "nodeType": "startNode"
     },
-    "conditionNodes": [
+    {
+      "title": "审批人",
+      "type": "approver",
+      "nodeType": "flowNode",
+      "assigneeType": "user",
+      "signType": "会签",
+      "assignees": [
         {
-            "type": "condition",
-            "content": "[学历 = 博士生]",
-            "title": "aaa",
-            "flowNode": {
-                "assignees":[
-                    {
-                        "userId":"1",
-                        "userName":"张三"
-                    },
-                    {
-                        "userId":"2",
-                        "userName":"李四"
-                    }
-                ],
-                "title": "审批人",
-                "type": "approver",
-                "assigneeType": "user",
-                "signType":"会签"
-            },
-             "flowNode": {
-                "assignees":[
-                    {
-                        "userId":"1",
-                        "userName":"张三"
-                    },
-                    {
-                        "userId":"2",
-                        "userName":"李四"
-                    }
-                ],
-                "title": "抄送人",
-                "type": "copy",
-                "assigneeType": "user"
-            }
+          "userId": "1",
+          "userName": "张三"
         },
         {
-
-            "type": "condition",
-            "content": "[年龄 > 30]",
-            "title": "aaa",
-            "flowNode": {
-                "assignees":[
-                    {
-                        "userId":"3",
-                        "userName":"王五"
-                    },
-                    {
-                        "userId":"4",
-                        "userName":"赵六"
-                    }
-                ],
-                "title": "审批人",
-                "type": "approver",
-                "assigneeType": "user",
-                "signType":"或签"
-            },
-            "conditionNodes": [
+          "userId": "2",
+          "userName": "李四"
+        }
+      ]
+    },
+    {
+      "nodeType": "conditionNode",
+      "conditionNodes": [
+        {
+          "type": "condition",
+          "content": "[学历 = 博士生]",
+          "title": "aaa",
+          "flowNodes": [
+            {
+              "title": "审批人",
+              "type": "approver",
+              "assigneeType": "user",
+              "signType": "会签",
+              "assignees": [
                 {
-                    "type": "condition",
-                    "content": "[学历 = 博士生]",
-                    "title": "aaa",
-                    "flowNode": {
-                        "assignees":[
-                            {
-                                "userId":"1",
-                                "userName":"张三"
-                            },
-                            {
-                                "userId":"2",
-                                "userName":"李四"
-                            }
-                        ],
-                        "title": "审批人",
-                        "type": "approver",
-                        "assigneeType": "user",
-                        "signType":"会签"
-                    },
-                     "flowNode": {
-                        "assignees":[
-                            {
-                                "userId":"1",
-                                "userName":"张三"
-                            },
-                            {
-                                "userId":"2",
-                                "userName":"李四"
-                            }
-                        ],
-                        "title": "抄送人",
-                        "type": "copy",
-                        "assigneeType": "user"
-                    }
+                  "userId": "1",
+                  "userName": "张三"
                 },
                 {
-        
-                    "type": "condition",
-                    "content": "[年龄 > 30]",
-                    "title": "aaa",
-                    "flowNode": {
-                        "assignees":[
-                            {
-                                "userId":"3",
-                                "userName":"王五"
-                            },
-                            {
-                                "userId":"4",
-                                "userName":"赵六"
-                            }
-                        ],
-                        "title": "审批人",
-                        "type": "approver",
-                        "assigneeType": "user",
-                        "signType":"或签"
-                    }
+                  "userId": "2",
+                  "userName": "李四"
                 }
-            ]
+              ]
+            },
+            {
+              "title": "抄送人",
+              "type": "copy",
+              "nodeType": "flowNode",
+              "assigneeType": "user",
+              "assignees": [
+                {
+                  "userId": "1",
+                  "userName": "张三"
+                },
+                {
+                  "userId": "2",
+                  "userName": "李四"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "condition",
+          "content": "[年龄 > 30]",
+          "title": "aaa",
+          "flowNodes": [
+            {
+              "assignees": [
+                {
+                  "userId": "3",
+                  "userName": "王五"
+                },
+                {
+                  "userId": "4",
+                  "userName": "赵六"
+                }
+              ],
+              "title": "审批人",
+              "type": "approver",
+              "nodeType": "flowNode",
+              "assigneeType": "user",
+              "signType": "或签"
+            }
+          ]
         }
-    ],
-    "flowNode": {
-        "content": "",
-        "title": "结束",
-        "type": "end"
+      ]
+    },
+    {
+      "content": "",
+      "title": "结束",
+      "nodeType": "endNode"
     }
+  ]
 }
