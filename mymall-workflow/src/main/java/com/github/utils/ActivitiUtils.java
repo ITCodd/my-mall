@@ -12,6 +12,28 @@ import java.util.List;
  */
 public class ActivitiUtils {
 
+    /**
+     *
+     * @param userTask 任务节点
+     * @param nodeId  节点id
+     * @param signType
+     *          countersign  会签
+     *          orsign       或签
+     */
+    public static void buildSign(UserTask userTask,String nodeId,String signType){
+        MultiInstanceLoopCharacteristics multiInstanceLoopCharacteristics = new MultiInstanceLoopCharacteristics();
+        multiInstanceLoopCharacteristics.setInputDataItem("${" + getVariablesKey(signType, nodeId)+ "}");
+        multiInstanceLoopCharacteristics.setElementVariable(signType + nodeId );
+        if (!StringUtils.equals(signType,"countersign")) {
+            multiInstanceLoopCharacteristics.setCompletionCondition("${nrOfCompletedInstances/nrOfInstances > 0}");
+        }
+        userTask.setLoopCharacteristics(multiInstanceLoopCharacteristics);
+        userTask.setAssignee("${" + signType + nodeId + "}");
+    }
+
+    public static String getVariablesKey(String signType,String nodeId){
+        return signType + "assignees" + nodeId;
+    }
 
     //包容网关
     public static InclusiveGateway createInclusiveGateway(String id, String name) {
@@ -53,6 +75,15 @@ public class ActivitiUtils {
             flow.setConditionExpression(conditionExpression);
         }
         return flow;
+    }
+
+    /*任务节点*/
+    public static UserTask createUserTaskSign(String id, String name,String signType) {
+        UserTask userTask = new UserTask();
+        userTask.setId(id);
+        userTask.setName(name);
+        buildSign(userTask,id,signType);
+        return userTask;
     }
 
     /*任务节点*/
