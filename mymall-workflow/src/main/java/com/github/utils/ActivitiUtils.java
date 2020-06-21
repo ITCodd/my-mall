@@ -1,8 +1,10 @@
 package com.github.utils;
 
 import org.activiti.bpmn.model.*;
+import org.activiti.engine.delegate.ExecutionListener;
 import org.apache.commons.lang.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,6 +31,34 @@ public class ActivitiUtils {
         }
         userTask.setLoopCharacteristics(multiInstanceLoopCharacteristics);
         userTask.setAssignee("${" + signType + nodeId + "}");
+    }
+
+    public static void buildSign(UserTask userTask,String signType,List<String> assigneeList){
+        MultiInstanceLoopCharacteristics multiInstanceLoopCharacteristics = new MultiInstanceLoopCharacteristics();
+        multiInstanceLoopCharacteristics.setInputDataItem("assigneeList");
+        multiInstanceLoopCharacteristics.setElementVariable("assignee");
+        if (!StringUtils.equals(signType,"countersign")) {
+            multiInstanceLoopCharacteristics.setCompletionCondition("${nrOfCompletedInstances/nrOfInstances > 0}");
+        }
+        userTask.setLoopCharacteristics(multiInstanceLoopCharacteristics);
+        userTask.setAssignee("${assignee}");
+        //设置监听器
+        userTask.setExecutionListeners(listeners());
+        //设置审批人
+        userTask.setCandidateUsers(assigneeList);
+    }
+
+    private static List<ActivitiListener> listeners(){
+        List<ActivitiListener> listeners=new ArrayList<>();
+        ActivitiListener activitiListener = new ActivitiListener();
+        //事件类型,
+        activitiListener.setEvent(ExecutionListener.EVENTNAME_START);
+        //监听器类型
+        activitiListener.setImplementationType(ImplementationType.IMPLEMENTATION_TYPE_DELEGATEEXPRESSION);
+        //设置实现了，这里设置监听器的类型是delegateExpression，这样可以在实现类注入Spring bean.
+        activitiListener.setImplementation("${signTaskListener}");
+        listeners.add(activitiListener);
+        return listeners;
     }
 
     public static String getVariablesKey(String signType,String nodeId){
@@ -83,6 +113,15 @@ public class ActivitiUtils {
         userTask.setId(id);
         userTask.setName(name);
         buildSign(userTask,id,signType);
+        return userTask;
+    }
+
+    /*任务节点*/
+    public static UserTask createUserTaskSignAssignees(String id, String name,String signType,List<String> assigneeList) {
+        UserTask userTask = new UserTask();
+        userTask.setId(id);
+        userTask.setName(name);
+        buildSign(userTask,signType,assigneeList);
         return userTask;
     }
 
