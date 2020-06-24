@@ -18,25 +18,21 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author: hjp
- * Date: 2020/6/20
+ * Date: 2020/6/23
  * Description:
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes={WorkflowApplication.class})
-public class ActivitiTest03 {
-
+public class ActivitiTest06 {
     @Autowired
     private RepositoryService repositoryService;
     @Autowired
@@ -45,42 +41,34 @@ public class ActivitiTest03 {
     private TaskService taskService;
     @Autowired
     private HistoryService historyService;
+    @Autowired
+    private ActivitiService activitiService;
 
     @Test
     public void t1() throws IOException {
         BpmnModel model = new BpmnModel();
         Process process=new Process();
         model.addProcess(process);
-        final String PROCESSID ="process04";
-        final String PROCESSNAME ="或签会签测试";
+        final String PROCESSID ="process07";
+        final String PROCESSNAME ="或签会签监听器-驳回上一节点(单人)测试";
         process.setId(PROCESSID);
         process.setName(PROCESSNAME);
 
-        Map<String, Object> variables = new HashMap<>();
-
         process.addFlowElement(ActivitiUtils.createStartEvent("start","start"));
-        process.addFlowElement(ActivitiUtils.createUserTaskSign("task1","部门领导审批","orsign"));
-        List<String> orsignAssignees=new ArrayList<>();
-        orsignAssignees.add("zsan");
-        orsignAssignees.add("lisi");
-        orsignAssignees.add("wangwu");
-        variables.put(ActivitiUtils.getVariablesKey("orsign","task1"),orsignAssignees);
-        process.addFlowElement(ActivitiUtils.createUserTaskSign("task2","经理审批","countersign"));
-        List<String> counterSignAssignees=new ArrayList<>();
-        counterSignAssignees.add("fugui");
-        counterSignAssignees.add("liubei");
-        counterSignAssignees.add("zouyu");
-        variables.put(ActivitiUtils.getVariablesKey("countersign","task2"),counterSignAssignees);
+        process.addFlowElement(ActivitiUtils.createUserTaskAssignee("task1","部门领导审批","zsan"));
+        process.addFlowElement(ActivitiUtils.createUserTaskAssignee("task2","经理审批","lisi"));
+        process.addFlowElement(ActivitiUtils.createUserTaskAssignee("task3","总经理审批","mayu"));
         process.addFlowElement(ActivitiUtils.createEndEvent("end","end"));
         process.addFlowElement(ActivitiUtils.createSequenceFlow("start", "task1"));
         process.addFlowElement(ActivitiUtils.createSequenceFlow("task1", "task2"));
-        process.addFlowElement(ActivitiUtils.createSequenceFlow("task2", "end"));
+        process.addFlowElement(ActivitiUtils.createSequenceFlow("task2", "task3"));
+        process.addFlowElement(ActivitiUtils.createSequenceFlow("task3", "end"));
 
         new BpmnAutoLayout(model).execute();
 
         Deployment deployment = repositoryService.createDeployment().addBpmnModel(PROCESSID + ".bpmn", model).name(PROCESSID + "_deployment").deploy();
 
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(PROCESSID,variables);
+        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(PROCESSID);
         System.out.println("processInstance = " + processInstance.getId());
         InputStream processDiagram = repositoryService.getProcessDiagram(processInstance.getProcessDefinitionId());
         FileUtils.copyInputStreamToFile(processDiagram, new File("/deployments/"+PROCESSID+".png"));
@@ -91,11 +79,39 @@ public class ActivitiTest03 {
 
     @Test
     public void t2() throws IOException {
-        Task task = taskService.createTaskQuery().processDefinitionKey("process04").taskAssignee("fugui").singleResult();
+        List<Task> tasks = taskService.createTaskQuery()
+                .processDefinitionKey("process07")
+                .list();
+        for (Task task : tasks) {
+            System.out.println("getId = " + task.getId());
+            System.out.println("getProcessInstanceId = " + task.getProcessInstanceId());
+            System.out.println("getProcessDefinitionId = " + task.getProcessDefinitionId());
+            System.out.println("getName = " + task.getName());
+            System.out.println("getTaskDefinitionKey = " + task.getTaskDefinitionKey());
+            System.out.println("getAssignee = " + task.getAssignee());
+        }
+    }
+
+    @Test
+    public void t3() throws IOException {
+        Task task = taskService.createTaskQuery().processDefinitionKey("process07").taskAssignee("mayu").singleResult();
         if (task != null) {
             taskService.complete(task.getId());//完成任务时，设置流程变量的值
             System.out.println("任务执行完毕");
         }
     }
 
+    @Test
+    public void t4() {
+        activitiService.backToPreNode("30002");
+    }
+
+    @Test
+    public void t5() throws IOException {
+        Task task = taskService.createTaskQuery().taskId("42517").singleResult();
+        if (task != null) {
+            taskService.complete(task.getId());//完成任务时，设置流程变量的值
+            System.out.println("任务执行完毕");
+        }
+    }
 }

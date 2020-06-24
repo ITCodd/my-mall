@@ -21,7 +21,6 @@ public class JumpCmd implements Command<Void> {
 
     private  String targetNodeId;
 
-    private  RepositoryService repositoryService;
     private String comment;
 
     /**
@@ -42,19 +41,12 @@ public class JumpCmd implements Command<Void> {
     public JumpCmd(String taskId, String targetNodeId, RepositoryService repositoryService) {
         this.taskId = taskId;
         this.targetNodeId = targetNodeId;
-        this.repositoryService = repositoryService;
-    }
 
-    public RepositoryService getRepositoryService() {
-        return repositoryService;
-    }
-
-    public void setRepositoryService(RepositoryService repositoryService) {
-        this.repositoryService = repositoryService;
     }
 
     @Override
     public Void execute(CommandContext commandContext) {
+        RepositoryService repositoryService = commandContext.getProcessEngineConfiguration().getRepositoryService();
         // 获取任务实例管理类
         TaskEntityManager taskEntityManager = commandContext.getTaskEntityManager();
         // 获取当前任务实例
@@ -68,7 +60,7 @@ public class JumpCmd implements Command<Void> {
         String processDefinitionId = execution.getProcessDefinitionId();
         // 获取目标节点
 //        Process process = ProcessDefinitionUtil.getProcess(processDefinitionId);
-        BpmnModel bpmnModel = this.repositoryService.getBpmnModel(processDefinitionId);
+        BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
         Process process = bpmnModel.getProcesses().get(0);
         FlowElement flowElement = process.getFlowElement(this.targetNodeId);
         // 获取历史管理

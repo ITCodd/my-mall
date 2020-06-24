@@ -6,4 +6,6 @@ package com.github.service;
  * Description:
  */
 public interface ActivitiService {
+
+    public void backToPreNode(String taskId);
 }
