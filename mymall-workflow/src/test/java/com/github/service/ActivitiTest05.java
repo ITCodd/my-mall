@@ -102,7 +102,7 @@ public class ActivitiTest05 {
 
     @Test
     public void t3() throws IOException {
-        Task task = taskService.createTaskQuery().processDefinitionKey("process06").taskAssignee("lisi").singleResult();
+        Task task = taskService.createTaskQuery().processDefinitionKey("process06").taskAssignee("zhaoliu").singleResult();
         if (task != null) {
             taskService.complete(task.getId());//完成任务时，设置流程变量的值
             System.out.println("任务执行完毕");
@@ -111,6 +111,21 @@ public class ActivitiTest05 {
 
     @Test
     public void t4() {
-        activitiService.backToPreNode("2514");
+        activitiService.backToPreNode("22502");
+    }
+
+
+
+
+    @Test
+    public void t5() {
+        activitiService.addSign("7527","zhaoliu");
+    }
+
+
+
+    @Test
+    public void t6() {
+        activitiService.multiSign("12525");
     }
 }

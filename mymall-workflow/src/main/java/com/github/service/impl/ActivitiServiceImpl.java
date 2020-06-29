@@ -1,15 +1,17 @@
 package com.github.service.impl;
 
-import com.github.cmd.JumpCmd;
+import com.github.cmd.*;
 import com.github.pojo.FlowTaskNode;
 import com.github.service.ActivitiService;
 import org.activiti.bpmn.model.*;
 import org.activiti.bpmn.model.Process;
 import org.activiti.engine.HistoryService;
+import org.activiti.engine.ManagementService;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.impl.TaskServiceImpl;
+import org.activiti.engine.impl.cmd.DeleteTaskCmd;
 import org.activiti.engine.impl.interceptor.CommandExecutor;
 import org.activiti.engine.impl.util.CollectionUtil;
 import org.activiti.engine.task.Task;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +37,8 @@ public class ActivitiServiceImpl implements ActivitiService {
     private HistoryService historyService;
     @Autowired
     private TaskService taskService;
-
+    @Autowired
+    private ManagementService managementService;
     @Override
     public void backToPreNode(String taskId) {
         Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
@@ -44,6 +48,35 @@ public class ActivitiServiceImpl implements ActivitiService {
         }
         nodeJumpTo(taskId, preTaskNode.getNodeId(), "驳回上环节");
     }
+
+
+    @Override
+    public void addSign(String taskId, String variable, String assignee) {
+        Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+        Map<String, Object> executionVariables = new HashMap<>();
+        executionVariables.put(variable,assignee);
+        String curExecutionId=task.getExecutionId();
+        managementService.executeCommand(new AddMuliInsExecutionCmd(curExecutionId,taskId,executionVariables));
+    }
+
+    @Override
+    public void addSign(String taskId,String assignee) {
+        addSign(taskId,"assignee",assignee);
+    }
+
+    @Override
+    public void multiSign(String taskId) {
+        multiSign(taskId,true);
+    }
+
+    @Override
+    public void multiSign(String taskId, boolean executionIsCompleted) {
+        Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+        String curExecutionId=task.getExecutionId();
+        managementService.executeCommand(new MultiDeleteCmd(curExecutionId,executionIsCompleted,taskId));
+    }
+
+
 
     public  void nodeJumpTo(String taskId, String targetNodeId, String comment) {
         CommandExecutor commandExecutor = ((TaskServiceImpl) taskService).getCommandExecutor();

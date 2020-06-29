@@ -70,7 +70,8 @@ public class JumpCmd implements Command<Void> {
         // 通知任务节点结束(更新act_hi_taskinst)
         historyManager.recordTaskEnd(this.taskId, this.comment);
         // 删除正在执行的当前任务
-        taskEntityManager.delete(taskId);
+        // 删除当前任务,来源任务
+        taskEntityManager.deleteTask(currentTask, "jumpReason", true, true);
 
         // 此时设置执行实例的当前活动节点为目标节点
         execution.setCurrentFlowElement(flowElement);

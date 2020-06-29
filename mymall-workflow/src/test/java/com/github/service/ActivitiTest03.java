@@ -45,7 +45,8 @@ public class ActivitiTest03 {
     private TaskService taskService;
     @Autowired
     private HistoryService historyService;
-
+    @Autowired
+    private ActivitiService activitiService;
     @Test
     public void t1() throws IOException {
         BpmnModel model = new BpmnModel();
@@ -91,11 +92,16 @@ public class ActivitiTest03 {
 
     @Test
     public void t2() throws IOException {
-        Task task = taskService.createTaskQuery().processDefinitionKey("process04").taskAssignee("fugui").singleResult();
+        Task task = taskService.createTaskQuery().processDefinitionKey("process04").taskAssignee("lisi").singleResult();
         if (task != null) {
             taskService.complete(task.getId());//完成任务时，设置流程变量的值
             System.out.println("任务执行完毕");
         }
+    }
+
+    @Test
+    public void t5() {
+        activitiService.addSign("2514","countersigntask2","zhaoliu");
     }
 
 }
