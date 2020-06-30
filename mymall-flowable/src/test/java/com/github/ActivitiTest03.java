@@ -1,5 +1,6 @@
 package com.github;
 
+import com.github.service.ProcessService;
 import com.github.utils.ActivitiUtils;
 import org.flowable.bpmn.converter.BpmnXMLConverter;
 import org.flowable.bpmn.model.BpmnModel;
@@ -36,6 +37,8 @@ public class ActivitiTest03 {
     private TaskService taskService;
     @Autowired
     private HistoryService historyService;
+    @Autowired
+    private ProcessService processService;
 
     @Test
     public void t1() throws IOException {
@@ -85,7 +88,16 @@ public class ActivitiTest03 {
 
     @Test
     public void t3() throws IOException {
-        String procId="efd85c51-baa7-11ea-80ac-005056c00008";
-        runtimeService.addMultiInstanceExecution("task1", procId, Collections.singletonMap("assignee", (Object) "guanyu"));
+        String taskId="2fb19cd7-bad9-11ea-921a-005056c00008";
+        String assignee="laoma";
+        processService.addMultiInstance(taskId,assignee);
     }
+
+    @Test
+    public void t4() throws IOException {
+        String taskId="dd2a2de1-bad9-11ea-ab8f-005056c00008";
+        processService.deleteMultiInstance(taskId);
+    }
+
+
 }
