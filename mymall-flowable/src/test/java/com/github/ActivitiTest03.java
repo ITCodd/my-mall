@@ -18,10 +18,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author: hjp
@@ -78,11 +75,17 @@ public class ActivitiTest03 {
     }
 
     @Test
-    public void t3() throws IOException {
+    public void t2() throws IOException {
         Task task = taskService.createTaskQuery().processDefinitionKey("process03").taskAssignee("zouyu").singleResult();
         if (task != null) {
             taskService.complete(task.getId());//完成任务时，设置流程变量的值
             System.out.println("任务执行完毕");
         }
+    }
+
+    @Test
+    public void t3() throws IOException {
+        String procId="efd85c51-baa7-11ea-80ac-005056c00008";
+        runtimeService.addMultiInstanceExecution("task1", procId, Collections.singletonMap("assignee", (Object) "guanyu"));
     }
 }
