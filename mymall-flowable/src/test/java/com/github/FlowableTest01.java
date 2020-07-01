@@ -1,7 +1,7 @@
 package com.github;
 
 
-import com.github.utils.ActivitiUtils;
+import com.github.utils.FlowableUtils;
 import org.flowable.bpmn.converter.BpmnXMLConverter;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.Process;
@@ -26,7 +26,7 @@ import java.io.IOException;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes={FlowableApplication.class})
-public class ActivitiTest01 {
+public class FlowableTest01 {
     @Autowired
     private RepositoryService repositoryService;
     @Autowired
@@ -46,13 +46,13 @@ public class ActivitiTest01 {
         process.setId(PROCESSID);
         process.setName(PROCESSNAME);
 
-        process.addFlowElement(ActivitiUtils.createStartEvent("start","start"));
-        process.addFlowElement(ActivitiUtils.createUserTaskAssignee("task-1","部门领导审批","zhangsan"));
-        process.addFlowElement(ActivitiUtils.createUserTaskAssignee("task-2","经理审批","lisi"));
-        process.addFlowElement(ActivitiUtils.createEndEvent("end","end"));
-        process.addFlowElement(ActivitiUtils.createSequenceFlow("start", "task-1"));
-        process.addFlowElement(ActivitiUtils.createSequenceFlow("task-1", "task-2"));
-        process.addFlowElement(ActivitiUtils.createSequenceFlow("task-2", "end"));
+        process.addFlowElement(FlowableUtils.createStartEvent("start","start"));
+        process.addFlowElement(FlowableUtils.createUserTaskAssignee("task-1","部门领导审批","zhangsan"));
+        process.addFlowElement(FlowableUtils.createUserTaskAssignee("task-2","经理审批","lisi"));
+        process.addFlowElement(FlowableUtils.createEndEvent("end","end"));
+        process.addFlowElement(FlowableUtils.createSequenceFlow("start", "task-1"));
+        process.addFlowElement(FlowableUtils.createSequenceFlow("task-1", "task-2"));
+        process.addFlowElement(FlowableUtils.createSequenceFlow("task-2", "end"));
 
         byte[] bpmnBytes = new BpmnXMLConverter().convertToXML(bpmnModel);
         String processName = PROCESSNAME+".bpmn20.xml";

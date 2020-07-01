@@ -182,4 +182,25 @@ public class ActivitiUtils {
         endEvent.setId("endEvent");
         return endEvent;
     }
+
+    public static SubProcess createSubProcess(String id, String name){
+        SubProcess subProcess=new SubProcess();
+        subProcess.setId(id);
+        subProcess.setName(name);
+        return subProcess;
+    }
+
+    public static void subProcessAddFlowElement(String id, String name,List<FlowElement> flowElements){
+        SubProcess subProcess = createSubProcess(id, name);
+        for (FlowElement flowElement : flowElements) {
+            subProcess.addFlowElement(flowElement);
+        }
+    }
+
+    public static void subProcessAddFlowElement(SubProcess subProcess,List<FlowElement> flowElements){
+        for (FlowElement flowElement : flowElements) {
+            subProcess.addFlowElement(flowElement);
+        }
+    }
+
 }

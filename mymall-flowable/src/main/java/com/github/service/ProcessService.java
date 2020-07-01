@@ -8,4 +8,6 @@ public interface ProcessService {
     void addMultiInstance(String taskId,String assignee);
 
     void deleteMultiInstance(String taskId);
+
+    void genProcessDiagram(String processId);
 }
