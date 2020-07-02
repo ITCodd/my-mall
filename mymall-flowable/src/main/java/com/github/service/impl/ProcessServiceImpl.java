@@ -99,4 +99,31 @@ public class ProcessServiceImpl implements ProcessService {
         IOUtils.closeQuietly(in);
     }
 
+    /**
+     * 驳回（或移动节点），不支持并行网关
+     * @param proInstId
+     * @param nodeId
+     * @param toNodeId
+     */
+    @Override
+    public void move(String proInstId, String nodeId, String toNodeId) {
+        runtimeService.createChangeActivityStateBuilder()
+                .processInstanceId(proInstId)
+                .moveActivityIdTo(nodeId, toNodeId)
+                .changeState();
+    }
+
+    /**
+     * 驳回（或移动节点）到父流程，不支持并行网关
+     * @param subProInstId
+     * @param subNodeId
+     * @param parentNodeId
+     */
+    @Override
+    public void moveToParentProInst(String proInstId, String subNodeId, String parentNodeId) {
+        runtimeService.createChangeActivityStateBuilder()
+                .processInstanceId(proInstId)
+                .moveActivityIdToParentActivityId(subNodeId, parentNodeId)
+                .changeState();
+    }
 }

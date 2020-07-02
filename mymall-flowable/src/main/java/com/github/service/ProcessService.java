@@ -10,4 +10,8 @@ public interface ProcessService {
     void deleteMultiInstance(String taskId);
 
     void genProcessDiagram(String processId);
+
+    void move(String proInstId, String nodeId, String toNodeId);
+
+    void moveToParentProInst(String proInstId, String subNodeId, String parentNodeId);
 }

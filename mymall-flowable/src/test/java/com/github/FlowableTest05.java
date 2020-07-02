@@ -19,11 +19,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes={FlowableApplication.class})
 @Slf4j
-public class FlowableTest04 {
+public class FlowableTest05 {
     @Autowired
     private RepositoryService repositoryService;
     @Autowired
@@ -35,20 +37,27 @@ public class FlowableTest04 {
     @Autowired
     private ProcessService processService;
 
-
     @Test
     public void t1() throws IOException {
         BpmnModel bpmnModel=new BpmnModel();
         Process process = new Process();
         bpmnModel.addProcess(process);
-        final String PROCESSID ="process04";
-        final String PROCESSNAME ="驳回测试";
+        final String PROCESSID ="process05";
+        final String PROCESSNAME ="或签会签监听器驳回测试";
         process.setId(PROCESSID);
         process.setName(PROCESSNAME);
 
         process.addFlowElement(FlowableUtils.createStartEvent("start","start"));
-        process.addFlowElement(FlowableUtils.createUserTaskAssignee("task1","部门领导审批","zsan"));
-        process.addFlowElement(FlowableUtils.createUserTaskAssignee("task2","经理审批","fugui"));
+        List<String> orsignAssignees=new ArrayList<>();
+        orsignAssignees.add("zsan");
+        orsignAssignees.add("lisi");
+        orsignAssignees.add("wangwu");
+        process.addFlowElement(FlowableUtils.createUserTaskSignAssignees("task1","部门领导审批","orsign",orsignAssignees));
+        List<String> counterSignAssignees=new ArrayList<>();
+        counterSignAssignees.add("fugui");
+        counterSignAssignees.add("liubei");
+        counterSignAssignees.add("zouyu");
+        process.addFlowElement(FlowableUtils.createUserTaskSignAssignees("task2","经理审批","countersign",counterSignAssignees));
         process.addFlowElement(FlowableUtils.createUserTaskAssignee("task3","总经理审批","mayu"));
         process.addFlowElement(FlowableUtils.createEndEvent("end","end"));
         process.addFlowElement(FlowableUtils.createSequenceFlow("start", "task1"));
@@ -66,14 +75,14 @@ public class FlowableTest04 {
                 .addBpmnModel(processName, bpmnModel)
                 .deploy();
 
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("process04");
+        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("process05");
         log.info("processInstance = " + processInstance.getId());
 
     }
 
     @Test
     public void t2() throws IOException {
-        Task task = taskService.createTaskQuery().processDefinitionKey("process04").taskAssignee("mayu").singleResult();
+        Task task = taskService.createTaskQuery().processDefinitionKey("process05").taskAssignee("mayu").singleResult();
         if (task != null) {
             taskService.complete(task.getId());//完成任务时，设置流程变量的值
             System.out.println("任务执行完毕");
@@ -82,13 +91,13 @@ public class FlowableTest04 {
 
     @Test
     public void t3() throws IOException {
-        processService.genProcessDiagram("6d6f0921-bc6a-11ea-8521-005056c00008");
+        processService.genProcessDiagram("0143f7b9-bc6d-11ea-a37a-005056c00008");
     }
 
 
     @Test
     public void t4() throws IOException {
-        processService.move("6d6f0921-bc6a-11ea-8521-005056c00008","task2","task1");
+        processService.move("0143f7b9-bc6d-11ea-a37a-005056c00008","task2","task1");
     }
 
 }
