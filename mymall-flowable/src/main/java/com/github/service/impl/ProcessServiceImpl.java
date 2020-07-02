@@ -96,7 +96,7 @@ public class ProcessServiceImpl implements ProcessService {
         }catch (Exception e){
             log.info("写入文件失败",e);
         }
-
+        IOUtils.closeQuietly(in);
     }
 
 }
