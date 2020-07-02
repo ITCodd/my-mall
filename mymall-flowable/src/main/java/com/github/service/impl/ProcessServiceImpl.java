@@ -33,8 +33,6 @@ public class ProcessServiceImpl implements ProcessService {
     private TaskService taskService;
     @Autowired
     private HistoryService historyService;
-    @Autowired
-    private ProcessEngineConfiguration engconf;
 
     @Override
     public void addMultiInstance(String taskId,String assignee) {
@@ -60,6 +58,7 @@ public class ProcessServiceImpl implements ProcessService {
     }
 
 
+    @Override
     public void genProcessDiagram(String processId) {
         /**
          * 获得当前活动的节点
@@ -89,12 +88,10 @@ public class ProcessServiceImpl implements ProcessService {
         List<String> flows = new ArrayList<>();
         //获取流程图
         BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
-//        ProcessEngineConfiguration engconf = processEngine.getProcessEngineConfiguration();
-
         DefaultProcessDiagramGenerator diagramGenerator = new     DefaultProcessDiagramGenerator();
-        InputStream in = diagramGenerator.generateDiagram(bpmnModel, "bmp", highLightedActivitis, flows, "宋体",
+        InputStream in = diagramGenerator.generateDiagram(bpmnModel, "png", highLightedActivitis, flows, "宋体",
                 "宋体", "宋体", null, 1.0, true);
-        try(OutputStream out=new FileOutputStream(new File("F:\\var",processId+".bmp"))){
+        try(OutputStream out=new FileOutputStream(new File("F:\\var",processId+".png"))){
             IOUtils.copy(in,out);
         }catch (Exception e){
             log.info("写入文件失败",e);

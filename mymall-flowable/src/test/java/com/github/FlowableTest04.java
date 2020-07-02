@@ -2,13 +2,15 @@ package com.github;
 
 import com.github.service.ProcessService;
 import com.github.utils.FlowableUtils;
-import org.flowable.bpmn.converter.BpmnXMLConverter;
+import org.flowable.bpmn.BpmnAutoLayout;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.Process;
 import org.flowable.engine.HistoryService;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
+import org.flowable.engine.repository.Deployment;
+import org.flowable.engine.repository.DeploymentBuilder;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.task.api.Task;
 import org.junit.Test;
@@ -54,12 +56,15 @@ public class FlowableTest04 {
         process.addFlowElement(FlowableUtils.createSequenceFlow("task2", "task3"));
         process.addFlowElement(FlowableUtils.createSequenceFlow("task3", "end"));
 
-        byte[] bpmnBytes = new BpmnXMLConverter().convertToXML(bpmnModel);
         String processName = PROCESSNAME+".bpmn20.xml";
-        repositoryService.createDeployment()
-                .name(PROCESSNAME)
-                .addBytes(processName,bpmnBytes)
-                .deploy();
+
+        //生成自动布局
+        new BpmnAutoLayout(bpmnModel).execute();
+        DeploymentBuilder deploymentBuilder = repositoryService
+                .createDeployment()
+                .addBpmnModel(processName, bpmnModel);
+        // 部署
+        Deployment deploy = deploymentBuilder.deploy();
 
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("process04");
         System.out.println("processInstance = " + processInstance.getId());
@@ -77,7 +82,7 @@ public class FlowableTest04 {
 
     @Test
     public void t3() throws IOException {
-        processService.genProcessDiagram("3a0db23b-bba7-11ea-835a-005056c00008");
+        processService.genProcessDiagram("9cb1fc13-bc10-11ea-b05e-005056c00008");
     }
 
 
