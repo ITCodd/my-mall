@@ -21,7 +21,9 @@ https://blog.csdn.net/weixin_40816738/article/details/103077196
 https://blog.csdn.net/liuwenjun05101/article/details/82534102
 
 https://plugins.jetbrains.com/plugin/14318-flowable-bpmn-visualizer/versions
-
+#flowable 上一节点任务撤回-（5）嵌入式子流程
+https://www.jianshu.com/p/9e7e49c2a8aa
+https://gitee.com/zjm16/zjmzxfzhl
 #子流程
 https://blog.csdn.net/a770467311/article/details/84108408
 

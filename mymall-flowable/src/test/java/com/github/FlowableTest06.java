@@ -117,7 +117,7 @@ public class FlowableTest06 {
 
     @Test
     public void t5() throws IOException {
-        processService.moveToParentProInst("f262ede9-bc70-11ea-842c-005056c00008","subTask1","task2");
+        processService.moveToParentProcess("f262ede9-bc70-11ea-842c-005056c00008","subTask1","task2");
     }
 
 }

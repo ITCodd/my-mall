@@ -4,7 +4,10 @@ import com.github.service.ProcessService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.flowable.bpmn.model.BpmnModel;
-import org.flowable.engine.*;
+import org.flowable.engine.HistoryService;
+import org.flowable.engine.RepositoryService;
+import org.flowable.engine.RuntimeService;
+import org.flowable.engine.TaskService;
 import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -33,6 +36,7 @@ public class ProcessServiceImpl implements ProcessService {
     private TaskService taskService;
     @Autowired
     private HistoryService historyService;
+
 
     @Override
     public void addMultiInstance(String taskId,String assignee) {
@@ -88,7 +92,7 @@ public class ProcessServiceImpl implements ProcessService {
         List<String> flows = new ArrayList<>();
         //获取流程图
         BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
-        DefaultProcessDiagramGenerator diagramGenerator = new     DefaultProcessDiagramGenerator();
+        DefaultProcessDiagramGenerator diagramGenerator = new  DefaultProcessDiagramGenerator();
         InputStream in = diagramGenerator.generateDiagram(bpmnModel, "png", highLightedActivitis, flows, "宋体",
                 "宋体", "宋体", null, 1.0, true);
         try(OutputStream out=new FileOutputStream(new File("F:\\var",processId+".png"))){
@@ -115,12 +119,12 @@ public class ProcessServiceImpl implements ProcessService {
 
     /**
      * 驳回（或移动节点）到父流程，不支持并行网关
-     * @param subProInstId
+     * @param proInstId
      * @param subNodeId
      * @param parentNodeId
      */
     @Override
-    public void moveToParentProInst(String proInstId, String subNodeId, String parentNodeId) {
+    public void moveToParentProcess(String proInstId, String subNodeId, String parentNodeId) {
         runtimeService.createChangeActivityStateBuilder()
                 .processInstanceId(proInstId)
                 .moveActivityIdToParentActivityId(subNodeId, parentNodeId)

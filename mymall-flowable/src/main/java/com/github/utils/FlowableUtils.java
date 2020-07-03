@@ -95,6 +95,15 @@ public class FlowableUtils {
         return sequenceFlow;
     }
 
+    // 连接线
+    public static SequenceFlow createSequenceFlow(String sourceRef, String targetRef, String conditionExpression) {
+        SequenceFlow sequenceFlow = new SequenceFlow(sourceRef, targetRef);
+        if(StringUtils.isNotEmpty(conditionExpression)){
+            sequenceFlow.setConditionExpression(conditionExpression);
+        }
+        return sequenceFlow;
+    }
+
     /*连线*/
     public static SequenceFlow createSequenceFlow(String from, String to, String name, String conditionExpression) {
         SequenceFlow flow = new SequenceFlow();

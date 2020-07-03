@@ -13,5 +13,5 @@ public interface ProcessService {
 
     void move(String proInstId, String nodeId, String toNodeId);
 
-    void moveToParentProInst(String proInstId, String subNodeId, String parentNodeId);
+    void moveToParentProcess(String proInstId, String subNodeId, String parentNodeId);
 }
