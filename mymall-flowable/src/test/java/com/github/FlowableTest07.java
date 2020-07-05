@@ -3,7 +3,6 @@ package com.github;
 import com.github.service.ProcessService;
 import com.github.utils.FlowableUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.flowable.bpmn.BpmnAutoLayout;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.Process;
 import org.flowable.engine.HistoryService;
@@ -104,13 +103,38 @@ public class FlowableTest07 {
 
     @Test
     public void t2() throws IOException {
-        Task task = taskService.createTaskQuery().processDefinitionKey("process07").taskAssignee("zhaoyun").singleResult();
+        Task task = taskService.createTaskQuery().processDefinitionKey("process07").taskAssignee("lisi").singleResult();
         if (task != null) {
             Map<String, Object> map=new HashMap<>();
-//            map.put("personNum",1);
+            map.put("personNum",3);
             taskService.complete(task.getId(),map);//完成任务时，设置流程变量的值
             System.out.println("任务执行完毕");
         }
+    }
+
+    @Test
+    public void t3() throws IOException {
+        Task task = taskService.createTaskQuery().processDefinitionKey("process07").taskAssignee("mayu").singleResult();
+        if (task != null) {
+            taskService.complete(task.getId());//完成任务时，设置流程变量的值
+            System.out.println("任务执行完毕");
+        }
+    }
+
+    @Test
+    public void t4() throws IOException {
+        List<String> nodeIds=new ArrayList<>();
+        nodeIds.add("task4");
+        nodeIds.add("task5");
+        processService.moveNodeIdsToSingle("ffc5d7ba-bdd9-11ea-92ab-005056c00008",nodeIds,"task3");
+    }
+
+    @Test
+    public void t5() throws IOException {
+        List<String> nodeIds=new ArrayList<>();
+        nodeIds.add("task4");
+        nodeIds.add("task5");
+        processService.moveSingleToNodeIds("ffc5d7ba-bdd9-11ea-92ab-005056c00008","task6",nodeIds);
     }
 
 }

@@ -97,7 +97,7 @@ public class FlowableTest06 {
 
     @Test
     public void t2() throws IOException {
-        Task task = taskService.createTaskQuery().processDefinitionKey("process06").taskAssignee("xiaoli").singleResult();
+        Task task = taskService.createTaskQuery().processDefinitionKey("process06").taskAssignee("mayu").singleResult();
         if (task != null) {
             taskService.complete(task.getId());//完成任务时，设置流程变量的值
             System.out.println("任务执行完毕");
@@ -112,12 +112,17 @@ public class FlowableTest06 {
 
     @Test
     public void t4() throws IOException {
-        processService.move("f262ede9-bc70-11ea-842c-005056c00008","subTask1","task2");
+        processService.move("f262ede9-bc70-11ea-842c-005056c00008","task3","subTask2");
     }
 
     @Test
     public void t5() throws IOException {
         processService.moveToParentProcess("f262ede9-bc70-11ea-842c-005056c00008","subTask1","task2");
+    }
+
+    @Test
+    public void t6() throws IOException {
+        processService.moveToSubProcess("f262ede9-bc70-11ea-842c-005056c00008","subProcessTask","subTask2","task3");
     }
 
 }

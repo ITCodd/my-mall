@@ -16,6 +16,7 @@ import java.io.Serializable;
 import java.util.Map;
 
 /**
+ * 加签
  * https://blog.csdn.net/zhangcongyi420/java/article/details/106971812
  */
 public class AddMuliInsExecutionCmd implements Command<Void>, Serializable {

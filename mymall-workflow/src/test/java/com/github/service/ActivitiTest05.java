@@ -1,14 +1,12 @@
 package com.github.service;
 
 import com.github.WorkflowApplication;
+import com.github.cmd.MoveMutiOutCommand;
 import com.github.utils.ActivitiUtils;
 import org.activiti.bpmn.BpmnAutoLayout;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.bpmn.model.Process;
-import org.activiti.engine.HistoryService;
-import org.activiti.engine.RepositoryService;
-import org.activiti.engine.RuntimeService;
-import org.activiti.engine.TaskService;
+import org.activiti.engine.*;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
@@ -43,6 +41,8 @@ public class ActivitiTest05 {
     private HistoryService historyService;
     @Autowired
     private ActivitiService activitiService;
+    @Autowired
+    private ManagementService managementService;
 
     @Test
     public void t1() throws IOException {
@@ -102,7 +102,7 @@ public class ActivitiTest05 {
 
     @Test
     public void t3() throws IOException {
-        Task task = taskService.createTaskQuery().processDefinitionKey("process06").taskAssignee("zhaoliu").singleResult();
+        Task task = taskService.createTaskQuery().processDefinitionKey("process06").taskAssignee("lisi").singleResult();
         if (task != null) {
             taskService.complete(task.getId());//完成任务时，设置流程变量的值
             System.out.println("任务执行完毕");
@@ -111,7 +111,9 @@ public class ActivitiTest05 {
 
     @Test
     public void t4() {
-        activitiService.backToPreNode("22502");
+       MoveMutiOutCommand cmd=new MoveMutiOutCommand("2514","task1");
+        managementService.executeCommand(cmd);
+
     }
 
 
@@ -119,6 +121,7 @@ public class ActivitiTest05 {
 
     @Test
     public void t5() {
+        //加签
         activitiService.addSign("7527","zhaoliu");
     }
 
@@ -126,6 +129,7 @@ public class ActivitiTest05 {
 
     @Test
     public void t6() {
+        //减签
         activitiService.multiSign("12525");
     }
 }

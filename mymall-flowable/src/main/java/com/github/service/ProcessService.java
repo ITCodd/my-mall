@@ -1,5 +1,7 @@
 package com.github.service;
 
+import java.util.List;
+
 public interface ProcessService {
     /**
      * 加签
@@ -14,4 +16,10 @@ public interface ProcessService {
     void move(String proInstId, String nodeId, String toNodeId);
 
     void moveToParentProcess(String proInstId, String subNodeId, String parentNodeId);
+
+    void moveToSubProcess(String proInstId, String subProcess,String subNodeId,String parentNodeId);
+
+    void moveNodeIdsToSingle(String proInstId, List<String> nodeIds, String toNodeId);
+
+    void moveSingleToNodeIds(String proInstId, String nodeId, List<String> toNodeIds);
 }

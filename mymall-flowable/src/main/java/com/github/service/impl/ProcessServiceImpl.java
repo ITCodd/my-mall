@@ -104,10 +104,10 @@ public class ProcessServiceImpl implements ProcessService {
     }
 
     /**
-     * 驳回（或移动节点），不支持并行网关
-     * @param proInstId
-     * @param nodeId
-     * @param toNodeId
+     * 驳回（或移动节点），不支持并行网关，支持从父流程退回子流程SubProcess
+     * @param proInstId  流程实例id
+     * @param nodeId     流程id定义名称
+     * @param toNodeId   跳转或驳回的流程节点id定义名称
      */
     @Override
     public void move(String proInstId, String nodeId, String toNodeId) {
@@ -119,15 +119,52 @@ public class ProcessServiceImpl implements ProcessService {
 
     /**
      * 驳回（或移动节点）到父流程，不支持并行网关
-     * @param proInstId
-     * @param subNodeId
-     * @param parentNodeId
+     * @param proInstId     流程实例id
+     * @param subNodeId     子流程id定义名称
+     * @param parentNodeId  父流程的流程节点定义id
      */
     @Override
     public void moveToParentProcess(String proInstId, String subNodeId, String parentNodeId) {
         runtimeService.createChangeActivityStateBuilder()
                 .processInstanceId(proInstId)
                 .moveActivityIdToParentActivityId(subNodeId, parentNodeId)
+                .changeState();
+    }
+
+    /**
+     * 驳回（或移动节点）到子流程，不支持并行网关，只支持调用子流程 CallActivity
+     * @param proInstId  流程实例id
+     * @param subProcess 子流程id定义名称
+     * @param subNodeId  子流程里的流程节点定义id
+     * @param parentNodeId 父流程的流程节点定义id
+     */
+    @Override
+    public void moveToSubProcess(String proInstId, String subProcess, String subNodeId, String parentNodeId) {
+        runtimeService.createChangeActivityStateBuilder()
+                .processInstanceId(proInstId)
+                .moveActivityIdToSubProcessInstanceActivityId(parentNodeId, subNodeId, subProcess)
+                .changeState();
+    }
+
+    /**
+     * 驳回（或移动节点），支持并行网关，支持从父流程退回子流程SubProcess
+     * @param proInstId   流程实例id
+     * @param nodeIds     流程节点定义id集合
+     * @param toNodeId    流程节点定义id
+     */
+    @Override
+    public void moveNodeIdsToSingle(String proInstId, List<String> nodeIds, String toNodeId) {
+        runtimeService.createChangeActivityStateBuilder()
+                .processInstanceId(proInstId)
+                .moveActivityIdsToSingleActivityId(nodeIds, toNodeId)
+                .changeState();
+    }
+
+    @Override
+    public void moveSingleToNodeIds(String proInstId, String nodeId, List<String> toNodeIds) {
+        runtimeService.createChangeActivityStateBuilder()
+                .processInstanceId(proInstId)
+                .moveSingleActivityIdToActivityIds(nodeId, toNodeIds)
                 .changeState();
     }
 }
