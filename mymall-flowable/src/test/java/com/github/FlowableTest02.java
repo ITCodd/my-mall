@@ -1,6 +1,6 @@
 package com.github;
 
-import com.github.utils.FlowableUtils;
+import com.github.utils.FlowElementUtils;
 import org.flowable.bpmn.converter.BpmnXMLConverter;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.Process;
@@ -50,25 +50,25 @@ public class FlowableTest02 {
         process.setName(PROCESSNAME);
 
         Map<String,Object> map=new HashMap<>();
-        process.addFlowElement(FlowableUtils.createStartEvent("start","start"));
+        process.addFlowElement(FlowElementUtils.createStartEvent("start","start"));
         List<String> orsignAssignees=new ArrayList<>();
         orsignAssignees.add("zsan");
         orsignAssignees.add("lisi");
         orsignAssignees.add("wangwu");
-        String key1 = FlowableUtils.getVariablesKey("orsign", "task1");
+        String key1 = FlowElementUtils.getVariablesKey("orsign", "task1");
         map.put(key1,orsignAssignees);
-        process.addFlowElement(FlowableUtils.createUserTaskSign("task1","部门领导审批","orsign"));
+        process.addFlowElement(FlowElementUtils.createUserTaskSign("task1","部门领导审批","orsign"));
         List<String> counterSignAssignees=new ArrayList<>();
         counterSignAssignees.add("fugui");
         counterSignAssignees.add("liubei");
         counterSignAssignees.add("zouyu");
-        String key2 = FlowableUtils.getVariablesKey("countersign", "task2");
+        String key2 = FlowElementUtils.getVariablesKey("countersign", "task2");
         map.put(key2,counterSignAssignees);
-        process.addFlowElement(FlowableUtils.createUserTaskSign("task2","经理审批","countersign"));
-        process.addFlowElement(FlowableUtils.createEndEvent("end","end"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("start", "task1"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task1", "task2"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task2", "end"));
+        process.addFlowElement(FlowElementUtils.createUserTaskSign("task2","经理审批","countersign"));
+        process.addFlowElement(FlowElementUtils.createEndEvent("end","end"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("start", "task1"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task1", "task2"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task2", "end"));
 
         byte[] bpmnBytes = new BpmnXMLConverter().convertToXML(bpmnModel);
         String processName = PROCESSNAME+".bpmn20.xml";

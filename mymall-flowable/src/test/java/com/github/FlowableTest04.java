@@ -1,7 +1,7 @@
 package com.github;
 
 import com.github.service.ProcessService;
-import com.github.utils.FlowableUtils;
+import com.github.utils.FlowElementUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.flowable.bpmn.BpmnAutoLayout;
 import org.flowable.bpmn.model.BpmnModel;
@@ -46,15 +46,15 @@ public class FlowableTest04 {
         process.setId(PROCESSID);
         process.setName(PROCESSNAME);
 
-        process.addFlowElement(FlowableUtils.createStartEvent("start","start"));
-        process.addFlowElement(FlowableUtils.createUserTaskAssignee("task1","部门领导审批","zsan"));
-        process.addFlowElement(FlowableUtils.createUserTaskAssignee("task2","经理审批","fugui"));
-        process.addFlowElement(FlowableUtils.createUserTaskAssignee("task3","总经理审批","mayu"));
-        process.addFlowElement(FlowableUtils.createEndEvent("end","end"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("start", "task1"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task1", "task2"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task2", "task3"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task3", "end"));
+        process.addFlowElement(FlowElementUtils.createStartEvent("start","start"));
+        process.addFlowElement(FlowElementUtils.createUserTaskAssignee("task1","部门领导审批","zsan"));
+        process.addFlowElement(FlowElementUtils.createUserTaskAssignee("task2","经理审批","fugui"));
+        process.addFlowElement(FlowElementUtils.createUserTaskAssignee("task3","总经理审批","mayu"));
+        process.addFlowElement(FlowElementUtils.createEndEvent("end","end"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("start", "task1"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task1", "task2"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task2", "task3"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task3", "end"));
 
         String processName = PROCESSNAME+".bpmn20.xml";
 

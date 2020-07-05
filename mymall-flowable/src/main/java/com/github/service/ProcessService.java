@@ -1,5 +1,7 @@
 package com.github.service;
 
+import com.github.utils.ResultData;
+
 import java.util.List;
 
 public interface ProcessService {
@@ -22,4 +24,6 @@ public interface ProcessService {
     void moveNodeIdsToSingle(String proInstId, List<String> nodeIds, String toNodeId);
 
     void moveSingleToNodeIds(String proInstId, String nodeId, List<String> toNodeIds);
+
+    ResultData moveToPre(String taskId, String comment);
 }

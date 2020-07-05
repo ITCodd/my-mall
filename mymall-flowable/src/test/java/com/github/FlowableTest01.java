@@ -1,7 +1,7 @@
 package com.github;
 
 
-import com.github.utils.FlowableUtils;
+import com.github.utils.FlowElementUtils;
 import org.flowable.bpmn.converter.BpmnXMLConverter;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.Process;
@@ -46,13 +46,13 @@ public class FlowableTest01 {
         process.setId(PROCESSID);
         process.setName(PROCESSNAME);
 
-        process.addFlowElement(FlowableUtils.createStartEvent("start","start"));
-        process.addFlowElement(FlowableUtils.createUserTaskAssignee("task-1","部门领导审批","zhangsan"));
-        process.addFlowElement(FlowableUtils.createUserTaskAssignee("task-2","经理审批","lisi"));
-        process.addFlowElement(FlowableUtils.createEndEvent("end","end"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("start", "task-1"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task-1", "task-2"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task-2", "end"));
+        process.addFlowElement(FlowElementUtils.createStartEvent("start","start"));
+        process.addFlowElement(FlowElementUtils.createUserTaskAssignee("task-1","部门领导审批","zhangsan"));
+        process.addFlowElement(FlowElementUtils.createUserTaskAssignee("task-2","经理审批","lisi"));
+        process.addFlowElement(FlowElementUtils.createEndEvent("end","end"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("start", "task-1"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task-1", "task-2"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task-2", "end"));
 
         byte[] bpmnBytes = new BpmnXMLConverter().convertToXML(bpmnModel);
         String processName = PROCESSNAME+".bpmn20.xml";

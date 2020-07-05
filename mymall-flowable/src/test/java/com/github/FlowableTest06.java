@@ -1,7 +1,7 @@
 package com.github;
 
 import com.github.service.ProcessService;
-import com.github.utils.FlowableUtils;
+import com.github.utils.FlowElementUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.flowable.bpmn.BpmnAutoLayout;
 import org.flowable.bpmn.model.BpmnModel;
@@ -48,37 +48,37 @@ public class FlowableTest06 {
         process.setId(PROCESSID);
         process.setName(PROCESSNAME);
 
-        process.addFlowElement(FlowableUtils.createStartEvent("start","start"));
+        process.addFlowElement(FlowElementUtils.createStartEvent("start","start"));
         List<String> orsignAssignees=new ArrayList<>();
         orsignAssignees.add("zsan");
         orsignAssignees.add("lisi");
         orsignAssignees.add("wangwu");
-        process.addFlowElement(FlowableUtils.createUserTaskSignAssignees("task1","部门领导审批","orsign",orsignAssignees));
+        process.addFlowElement(FlowElementUtils.createUserTaskSignAssignees("task1","部门领导审批","orsign",orsignAssignees));
         List<String> counterSignAssignees=new ArrayList<>();
         counterSignAssignees.add("fugui");
         counterSignAssignees.add("liubei");
         counterSignAssignees.add("zouyu");
-        process.addFlowElement(FlowableUtils.createUserTaskSignAssignees("task2","经理审批","countersign",counterSignAssignees));
+        process.addFlowElement(FlowElementUtils.createUserTaskSignAssignees("task2","经理审批","countersign",counterSignAssignees));
         //采购子流程
-        SubProcess subProcess = FlowableUtils.createSubProcess("subProcessTask", "采购部门采购");
+        SubProcess subProcess = FlowElementUtils.createSubProcess("subProcessTask", "采购部门采购");
         //子流程开始------------------------------
-        subProcess.addFlowElement(FlowableUtils.createStartEvent("subStart","start"));
-        subProcess.addFlowElement(FlowableUtils.createUserTaskAssignee("subTask1","采购审核员审批","xiaoli"));
-        subProcess.addFlowElement(FlowableUtils.createUserTaskAssignee("subTask2","采购经理审批","laowan"));
-        subProcess.addFlowElement(FlowableUtils.createEndEvent("subEnd","end"));
-        subProcess.addFlowElement(FlowableUtils.createSequenceFlow("subStart", "subTask1"));
-        subProcess.addFlowElement(FlowableUtils.createSequenceFlow("subTask1", "subTask2"));
-        subProcess.addFlowElement(FlowableUtils.createSequenceFlow("subTask2", "subEnd"));
+        subProcess.addFlowElement(FlowElementUtils.createStartEvent("subStart","start"));
+        subProcess.addFlowElement(FlowElementUtils.createUserTaskAssignee("subTask1","采购审核员审批","xiaoli"));
+        subProcess.addFlowElement(FlowElementUtils.createUserTaskAssignee("subTask2","采购经理审批","laowan"));
+        subProcess.addFlowElement(FlowElementUtils.createEndEvent("subEnd","end"));
+        subProcess.addFlowElement(FlowElementUtils.createSequenceFlow("subStart", "subTask1"));
+        subProcess.addFlowElement(FlowElementUtils.createSequenceFlow("subTask1", "subTask2"));
+        subProcess.addFlowElement(FlowElementUtils.createSequenceFlow("subTask2", "subEnd"));
         //子流程结束------------------------------
         process.addFlowElement(subProcess);
 
-        process.addFlowElement(FlowableUtils.createUserTaskAssignee("task3","总经理审批","mayu"));
-        process.addFlowElement(FlowableUtils.createEndEvent("end","end"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("start", "task1"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task1", "task2"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task2", "subProcessTask"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("subProcessTask", "task3"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task3", "end"));
+        process.addFlowElement(FlowElementUtils.createUserTaskAssignee("task3","总经理审批","mayu"));
+        process.addFlowElement(FlowElementUtils.createEndEvent("end","end"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("start", "task1"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task1", "task2"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task2", "subProcessTask"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("subProcessTask", "task3"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task3", "end"));
 
         String processName = PROCESSNAME+".bpmn20.xml";
 

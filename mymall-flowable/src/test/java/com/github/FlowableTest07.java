@@ -1,7 +1,7 @@
 package com.github;
 
 import com.github.service.ProcessService;
-import com.github.utils.FlowableUtils;
+import com.github.utils.FlowElementUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.Process;
@@ -53,39 +53,39 @@ public class FlowableTest07 {
         process.setId(PROCESSID);
         process.setName(PROCESSNAME);
 
-        process.addFlowElement(FlowableUtils.createStartEvent("start","start"));
+        process.addFlowElement(FlowElementUtils.createStartEvent("start","start"));
         List<String> orsignAssignees=new ArrayList<>();
         orsignAssignees.add("zsan");
         orsignAssignees.add("lisi");
         orsignAssignees.add("wangwu");
-        process.addFlowElement(FlowableUtils.createUserTaskSignAssignees("task1","部门领导审批","orsign",orsignAssignees));
-        process.addFlowElement(FlowableUtils.createExclusiveGateway("exclusiveGateway","排他网关"));
-        process.addFlowElement(FlowableUtils.createUserTaskAssignee("task2","人事审批","xiaomei"));
+        process.addFlowElement(FlowElementUtils.createUserTaskSignAssignees("task1","部门领导审批","orsign",orsignAssignees));
+        process.addFlowElement(FlowElementUtils.createExclusiveGateway("exclusiveGateway","排他网关"));
+        process.addFlowElement(FlowElementUtils.createUserTaskAssignee("task2","人事审批","xiaomei"));
         List<String> counterSignAssignees=new ArrayList<>();
         counterSignAssignees.add("fugui");
         counterSignAssignees.add("liubei");
         counterSignAssignees.add("zouyu");
-        process.addFlowElement(FlowableUtils.createUserTaskSignAssignees("task3","经理审批","countersign",counterSignAssignees));
-        process.addFlowElement(FlowableUtils.createParallelGateway("parallelGateway1","并行网关开始"));
-        process.addFlowElement(FlowableUtils.createUserTaskAssignee("task4","总裁办审批","laoli"));
-        process.addFlowElement(FlowableUtils.createUserTaskAssignee("task5","人事主管审批","laowan"));
-        process.addFlowElement(FlowableUtils.createParallelGateway("parallelGateway2","并行网关结束"));
-        process.addFlowElement(FlowableUtils.createUserTaskAssignee("task6","总经理审批","zhaoyun"));
-        process.addFlowElement(FlowableUtils.createUserTaskAssignee("task7","CEO","mayu"));
-        process.addFlowElement(FlowableUtils.createEndEvent("end","end"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("start", "task1"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task1", "exclusiveGateway"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("exclusiveGateway", "task3","${personNum < 3}"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("exclusiveGateway", "task2","${personNum >= 3}"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task2", "task3"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task3", "parallelGateway1"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("parallelGateway1", "task4"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("parallelGateway1", "task5"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task4", "parallelGateway2"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task5", "parallelGateway2"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("parallelGateway2", "task6"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task6", "task7"));
-        process.addFlowElement(FlowableUtils.createSequenceFlow("task7", "end"));
+        process.addFlowElement(FlowElementUtils.createUserTaskSignAssignees("task3","经理审批","countersign",counterSignAssignees));
+        process.addFlowElement(FlowElementUtils.createParallelGateway("parallelGateway1","并行网关开始"));
+        process.addFlowElement(FlowElementUtils.createUserTaskAssignee("task4","总裁办审批","laoli"));
+        process.addFlowElement(FlowElementUtils.createUserTaskAssignee("task5","人事主管审批","laowan"));
+        process.addFlowElement(FlowElementUtils.createParallelGateway("parallelGateway2","并行网关结束"));
+        process.addFlowElement(FlowElementUtils.createUserTaskAssignee("task6","总经理审批","zhaoyun"));
+        process.addFlowElement(FlowElementUtils.createUserTaskAssignee("task7","CEO","mayu"));
+        process.addFlowElement(FlowElementUtils.createEndEvent("end","end"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("start", "task1"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task1", "exclusiveGateway"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("exclusiveGateway", "task3","${personNum < 3}"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("exclusiveGateway", "task2","${personNum >= 3}"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task2", "task3"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task3", "parallelGateway1"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("parallelGateway1", "task4"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("parallelGateway1", "task5"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task4", "parallelGateway2"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task5", "parallelGateway2"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("parallelGateway2", "task6"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task6", "task7"));
+        process.addFlowElement(FlowElementUtils.createSequenceFlow("task7", "end"));
         String processName = PROCESSNAME+".bpmn20.xml";
 
         //生成自动布局
@@ -114,7 +114,7 @@ public class FlowableTest07 {
 
     @Test
     public void t3() throws IOException {
-        Task task = taskService.createTaskQuery().processDefinitionKey("process07").taskAssignee("mayu").singleResult();
+        Task task = taskService.createTaskQuery().processDefinitionKey("process07").taskAssignee("xiaomei").singleResult();
         if (task != null) {
             taskService.complete(task.getId());//完成任务时，设置流程变量的值
             System.out.println("任务执行完毕");
@@ -135,6 +135,11 @@ public class FlowableTest07 {
         nodeIds.add("task4");
         nodeIds.add("task5");
         processService.moveSingleToNodeIds("ffc5d7ba-bdd9-11ea-92ab-005056c00008","task6",nodeIds);
+    }
+
+    @Test
+    public void t6() throws IOException {
+        processService.moveToPre("4d661b59-bed5-11ea-b9e9-005056c00008","驳回意见");
     }
 
 }

@@ -28,7 +28,7 @@ public class ResultData<T> implements Serializable {
         return ResultData.<T>builder().code(200).data(data).message("OK").build();
     }
 
-    public static ResultData successMsg(String msg) {
+    public static ResultData success(String msg) {
         return ResultData.builder().code(200).message(msg).build();
     }
 
