@@ -542,6 +542,7 @@ public class ProcessUtils {
                 for (FlowElement flowElement : allElements) {
                     if (flowElement.getId().equals(stack.peek().getTaskDefinitionKey())) {
                         dirtyTask = flowElement;
+                        break;
                     }
                 }
                 // 获取脏数据线路

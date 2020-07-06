@@ -4,6 +4,7 @@ import com.github.service.ProcessService;
 import com.github.utils.ProcessUtils;
 import com.github.utils.ResultData;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.FlowElement;
@@ -22,6 +23,7 @@ import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.image.impl.DefaultProcessDiagramGenerator;
 import org.flowable.task.api.Task;
 import org.flowable.task.api.history.HistoricTaskInstance;
+import org.flowable.task.api.history.HistoricTaskInstanceQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,10 +31,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -263,7 +263,17 @@ public class ProcessServiceImpl implements ProcessService {
 
         // 规定：并行网关之前节点必须需存在唯一用户任务节点，如果出现多个任务节点，则并行网关节点默认为结束节点，原因为不考虑多对多情况
         if (targetIds.size() > 1 && currentIds.size() > 1) {
-            return ResultData.fail("任务出现多对多情况，无法撤回");
+            Set<String> currentActivityIds = new HashSet<>(currentIds);
+            if(currentActivityIds.size()==1){
+                //排他网关分支进入的情况
+                List<HistoricTaskInstance> list = historyService.createHistoricTaskInstanceQuery().processInstanceId(task.getProcessInstanceId())
+                        .taskDefinitionKeys(targetIds).desc().list();
+                HistoricTaskInstance historicTaskInstance = list.get(0);
+                String taskDefinitionKey = historicTaskInstance.getTaskDefinitionKey();
+            }else{
+                return ResultData.fail("任务出现多对多情况，无法撤回");
+            }
+
         }
 
         // 循环获取那些需要被撤回的节点的ID，用来设置驳回原因
@@ -282,14 +292,15 @@ public class ProcessServiceImpl implements ProcessService {
 
         try {
             // 如果父级任务多于 1 个，说明当前节点不是并行节点，原因为不考虑多对多情况
-            if (targetIds.size() > 1) {
+            if (targetIds.size() == 100) {
                 // 1 对 多任务跳转，currentIds 当前节点(1)，targetIds 跳转到的节点(多)
-                runtimeService.createChangeActivityStateBuilder().processInstanceId(task.getProcessInstanceId()).moveSingleActivityIdToActivityIds(currentIds.get(0), targetIds).changeState();
+                runtimeService.createChangeActivityStateBuilder().processInstanceId(task.getProcessInstanceId()).moveSingleActivityIdToActivityIds(currentIds.iterator().next(), targetIds).changeState();
             }
             // 如果父级任务只有一个，因此当前任务可能为网关中的任务
             if (targetIds.size() == 1) {
                 // 1 对 1 或 多 对 1 情况，currentIds 当前要跳转的节点列表(1或多)，targetIds.get(0) 跳转到的节点(1)
-                runtimeService.createChangeActivityStateBuilder().processInstanceId(task.getProcessInstanceId()).moveActivityIdsToSingleActivityId(currentIds, targetIds.get(0)).changeState();
+                List<String> currentActivityIds = new ArrayList<>(currentIds);
+                runtimeService.createChangeActivityStateBuilder().processInstanceId(task.getProcessInstanceId()).moveActivityIdsToSingleActivityId(currentActivityIds, targetIds.get(0)).changeState();
             }
         } catch (FlowableObjectNotFoundException e) {
             return ResultData.fail("未找到流程实例，流程可能已发生变化");
