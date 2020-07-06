@@ -1,11 +1,12 @@
 package com.github.service.impl;
 
+import com.github.draw.FlowProcessDiagramGenerator;
 import com.github.service.ProcessService;
 import com.github.utils.ProcessUtils;
 import com.github.utils.ResultData;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.flowable.bpmn.constants.BpmnXMLConstants;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.FlowElement;
 import org.flowable.bpmn.model.Process;
@@ -20,10 +21,8 @@ import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
-import org.flowable.image.impl.DefaultProcessDiagramGenerator;
 import org.flowable.task.api.Task;
 import org.flowable.task.api.history.HistoricTaskInstance;
-import org.flowable.task.api.history.HistoricTaskInstanceQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +31,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -46,7 +44,8 @@ public class ProcessServiceImpl implements ProcessService {
     private TaskService taskService;
     @Autowired
     private HistoryService historyService;
-
+    @Autowired
+    private FlowProcessDiagramGenerator flowProcessDiagramGenerator;
 
     @Override
     public void addMultiInstance(String taskId,String assignee) {
@@ -74,37 +73,34 @@ public class ProcessServiceImpl implements ProcessService {
 
     @Override
     public void genProcessDiagram(String processId) {
-        /**
-         * 获得当前活动的节点
-         */
-        String processDefinitionId = "";
-        if (isFinished(processId)) {// 如果流程已经结束，则得到结束节点
-            HistoricProcessInstance pi = historyService.createHistoricProcessInstanceQuery().processInstanceId(processId).singleResult();
-
-            processDefinitionId=pi.getProcessDefinitionId();
-        } else {// 如果流程没有结束，则取当前活动节点
-            // 根据流程实例ID获得当前处于活动状态的ActivityId合集
-            ProcessInstance pi = runtimeService.createProcessInstanceQuery().processInstanceId(processId).singleResult();
-            processDefinitionId=pi.getProcessDefinitionId();
+        //1.获取当前的流程实例
+        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processId).singleResult();
+        String processDefinitionId = null;
+        List<String> activeActivityIds = new ArrayList<>();
+        List<String> highLightedFlows = new ArrayList<>();
+        //2.获取所有的历史轨迹线对象
+        List<HistoricActivityInstance> historicSquenceFlows = historyService.createHistoricActivityInstanceQuery()
+                .processInstanceId(processId).activityType(BpmnXMLConstants.ELEMENT_SEQUENCE_FLOW).list();
+        historicSquenceFlows.forEach(historicActivityInstance -> highLightedFlows.add(historicActivityInstance.getActivityId()));
+        //3. 获取流程定义id和高亮的节点id
+        if (processInstance != null) {
+            //3.1. 正在运行的流程实例
+            processDefinitionId = processInstance.getProcessDefinitionId();
+            activeActivityIds = runtimeService.getActiveActivityIds(processId);
+        } else {
+            //3.2. 已经结束的流程实例
+            HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery().processInstanceId(processId).singleResult();
+            processDefinitionId = historicProcessInstance.getProcessDefinitionId();
+            //3.3. 获取结束节点列表
+            List<HistoricActivityInstance> historicEnds = historyService.createHistoricActivityInstanceQuery()
+                    .processInstanceId(processId).activityType(BpmnXMLConstants.ELEMENT_EVENT_END).list();
+            List<String> finalActiveActivityIds = activeActivityIds;
+            historicEnds.forEach(historicActivityInstance -> finalActiveActivityIds.add(historicActivityInstance.getActivityId()));
         }
-        List<String> highLightedActivitis = new ArrayList<String>();
-
-        /**
-         * 获得活动的节点
-         */
-        List<HistoricActivityInstance> highLightedActivitList =  historyService.createHistoricActivityInstanceQuery().processInstanceId(processId).orderByHistoricActivityInstanceStartTime().asc().list();
-
-        for(HistoricActivityInstance tempActivity : highLightedActivitList){
-            String activityId = tempActivity.getActivityId();
-            highLightedActivitis.add(activityId);
-        }
-
-        List<String> flows = new ArrayList<>();
-        //获取流程图
+        //4. 获取bpmnModel对象
         BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
-        DefaultProcessDiagramGenerator diagramGenerator = new  DefaultProcessDiagramGenerator();
-        InputStream in = diagramGenerator.generateDiagram(bpmnModel, "png", highLightedActivitis, flows, "宋体",
-                "宋体", "宋体", null, 1.0, true);
+        //5. 生成图片流
+        InputStream in = flowProcessDiagramGenerator.generateDiagram(bpmnModel, activeActivityIds, highLightedFlows);
         try(OutputStream out=new FileOutputStream(new File("F:\\var",processId+".png"))){
             IOUtils.copy(in,out);
         }catch (Exception e){
@@ -170,6 +166,12 @@ public class ProcessServiceImpl implements ProcessService {
                 .changeState();
     }
 
+    /**
+     * 驳回（或移动节点），支持并行网关，支持从父流程退回子流程SubProcess
+     * @param proInstId    流程实例id
+     * @param nodeId       流程节点定义id
+     * @param toNodeIds    流程节点定义id集合
+     */
     @Override
     public void moveSingleToNodeIds(String proInstId, String nodeId, List<String> toNodeIds) {
         runtimeService.createChangeActivityStateBuilder()
@@ -205,7 +207,7 @@ public class ProcessServiceImpl implements ProcessService {
         }
 
 
-        // 目的获取所有跳转到的节点 targetIds
+        // 目的获取所有跳转到的节点 targetNodeIds
         // 获取当前节点的所有父级用户任务节点
         // 深度优先算法思想：延边迭代深入
         List<UserTask> parentUserTaskList = ProcessUtils.iteratorFindParentUserTasks(source, null, null);
@@ -220,7 +222,7 @@ public class ProcessServiceImpl implements ProcessService {
         // 数据清洗，将回滚导致的脏数据清洗掉
         List<String> lastHistoricTaskInstanceList = ProcessUtils.historicTaskInstanceClean(allElements, historicTaskInstanceList);
         // 此时历史任务实例为倒序，获取最后走的节点
-        List<String> targetIds = new ArrayList<>();
+        List<String> targetNodeIds = new ArrayList<>();
         // 循环结束标识，遇到当前目标节点的次数
         int number = 0;
         StringBuilder parentHistoricTaskKey = new StringBuilder();
@@ -242,12 +244,12 @@ public class ProcessServiceImpl implements ProcessService {
             }
             // 如果当前历史节点，属于父级的节点，说明最后一次经过了这个点，需要退回这个点
             if (parentUserTaskKeyList.contains(historicTaskInstanceKey)) {
-                targetIds.add(historicTaskInstanceKey);
+                targetNodeIds.add(historicTaskInstanceKey);
             }
         }
 
 
-        // 目的获取所有需要被跳转的节点 currentIds
+        // 目的获取所有需要被跳转的节点 currentNodeIds
         // 取其中一个父级任务，因为后续要么存在公共网关，要么就是串行公共线路
         UserTask oneUserTask = parentUserTaskList.get(0);
         // 获取所有正常进行的任务节点 Key，这些任务不能直接使用，需要找出其中需要撤回的任务
@@ -255,21 +257,24 @@ public class ProcessServiceImpl implements ProcessService {
         List<String> runTaskKeyList = new ArrayList<>();
         runTaskList.forEach(item -> runTaskKeyList.add(item.getTaskDefinitionKey()));
         // 需驳回任务列表
-        List<String> currentIds = new ArrayList<>();
+        List<String> currentNodeIds = new ArrayList<>();
         // 通过父级网关的出口连线，结合 runTaskList 比对，获取需要撤回的任务
         List<UserTask> currentUserTaskList = ProcessUtils.iteratorFindChildUserTasks(oneUserTask, runTaskKeyList, null, null);
-        currentUserTaskList.forEach(item -> currentIds.add(item.getId()));
+        currentUserTaskList.forEach(item -> currentNodeIds.add(item.getId()));
 
 
         // 规定：并行网关之前节点必须需存在唯一用户任务节点，如果出现多个任务节点，则并行网关节点默认为结束节点，原因为不考虑多对多情况
-        if (targetIds.size() > 1 && currentIds.size() > 1) {
-            Set<String> currentActivityIds = new HashSet<>(currentIds);
+        if (targetNodeIds.size() > 1 && currentNodeIds.size() > 1) {
+            //会签一个nodeId有多个task
+            Set<String> currentActivityIds = new HashSet<>(currentNodeIds);
             if(currentActivityIds.size()==1){
                 //排他网关分支进入的情况
                 List<HistoricTaskInstance> list = historyService.createHistoricTaskInstanceQuery().processInstanceId(task.getProcessInstanceId())
-                        .taskDefinitionKeys(targetIds).desc().list();
+                        .taskDefinitionKeys(targetNodeIds).orderByHistoricTaskInstanceEndTime().desc().list();
                 HistoricTaskInstance historicTaskInstance = list.get(0);
                 String taskDefinitionKey = historicTaskInstance.getTaskDefinitionKey();
+                targetNodeIds.clear();
+                targetNodeIds.add(taskDefinitionKey);
             }else{
                 return ResultData.fail("任务出现多对多情况，无法撤回");
             }
@@ -278,7 +283,7 @@ public class ProcessServiceImpl implements ProcessService {
 
         // 循环获取那些需要被撤回的节点的ID，用来设置驳回原因
         List<String> currentTaskIds = new ArrayList<>();
-        currentIds.forEach(currentId -> runTaskList.forEach(runTask -> {
+        currentNodeIds.forEach(currentId -> runTaskList.forEach(runTask -> {
             if (currentId.equals(runTask.getTaskDefinitionKey())) {
                 currentTaskIds.add(runTask.getId());
             }
@@ -292,15 +297,14 @@ public class ProcessServiceImpl implements ProcessService {
 
         try {
             // 如果父级任务多于 1 个，说明当前节点不是并行节点，原因为不考虑多对多情况
-            if (targetIds.size() == 100) {
-                // 1 对 多任务跳转，currentIds 当前节点(1)，targetIds 跳转到的节点(多)
-                runtimeService.createChangeActivityStateBuilder().processInstanceId(task.getProcessInstanceId()).moveSingleActivityIdToActivityIds(currentIds.iterator().next(), targetIds).changeState();
+            if (targetNodeIds.size() > 1) {
+                // 1 对 多任务跳转，currentNodeIds 当前节点(1)，targetNodeIds 跳转到的节点(多)
+                this.moveSingleToNodeIds(task.getProcessInstanceId(),currentNodeIds.get(0),targetNodeIds);
             }
             // 如果父级任务只有一个，因此当前任务可能为网关中的任务
-            if (targetIds.size() == 1) {
-                // 1 对 1 或 多 对 1 情况，currentIds 当前要跳转的节点列表(1或多)，targetIds.get(0) 跳转到的节点(1)
-                List<String> currentActivityIds = new ArrayList<>(currentIds);
-                runtimeService.createChangeActivityStateBuilder().processInstanceId(task.getProcessInstanceId()).moveActivityIdsToSingleActivityId(currentActivityIds, targetIds.get(0)).changeState();
+            if (targetNodeIds.size() == 1) {
+                // 1 对 1 或 多 对 1 情况，currentNodeIds 当前要跳转的节点列表(1或多)，targetNodeIds.get(0) 跳转到的节点(1)
+                this.moveNodeIdsToSingle(task.getProcessInstanceId(),currentNodeIds,targetNodeIds.get(0));
             }
         } catch (FlowableObjectNotFoundException e) {
             return ResultData.fail("未找到流程实例，流程可能已发生变化");
