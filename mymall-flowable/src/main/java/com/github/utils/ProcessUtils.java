@@ -4,6 +4,7 @@ package com.github.utils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.model.*;
+import org.flowable.bpmn.model.Process;
 import org.flowable.engine.impl.bpmn.behavior.ParallelMultiInstanceBehavior;
 import org.flowable.engine.impl.bpmn.behavior.SequentialMultiInstanceBehavior;
 import org.flowable.task.api.history.HistoricTaskInstance;
@@ -481,11 +482,12 @@ public class ProcessUtils {
 
     /**
      * 历史节点数据清洗，清洗掉又回滚导致的脏数据
-     * @param allElements 全部节点信息
+     * @param process 流程实例
      * @param historicTaskInstanceList 历史任务实例信息，数据采用开始时间升序
      * @return
      */
-    public static List<String> historicTaskInstanceClean(Collection<FlowElement> allElements, List<HistoricTaskInstance> historicTaskInstanceList) {
+    public static List<String> historicTaskInstanceClean(Process process, List<HistoricTaskInstance> historicTaskInstanceList) {
+        Collection<FlowElement> allElements = process.getFlowElements();
         // 会签节点收集
         List<String> multiTask = new ArrayList<>();
         allElements.forEach(flowElement -> {
@@ -536,15 +538,9 @@ public class ProcessUtils {
                 if (stack.peek().getDeleteReason().indexOf("Change parent activity to ") >= 0) {
                     dirtyPoint = stack.peek().getDeleteReason().replace("Change parent activity to ", "");
                 }
-                FlowElement dirtyTask = null;
                 // 获取变更节点的对应的入口处连线
                 // 如果是网关并行回退情况，会变成两条脏数据路线，效果一样
-                for (FlowElement flowElement : allElements) {
-                    if (flowElement.getId().equals(stack.peek().getTaskDefinitionKey())) {
-                        dirtyTask = flowElement;
-                        break;
-                    }
-                }
+                FlowElement dirtyTask =process.getFlowElement(stack.peek().getTaskDefinitionKey(), true);
                 // 获取脏数据线路
                 Set<String> dirtyDataLine = ProcessUtils.iteratorFindDirtyRoads(dirtyTask, null, null, Arrays.asList(dirtyPoint.split(",")), null);
                 // 自己本身也是脏线路上的点，加进去

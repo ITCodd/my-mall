@@ -114,7 +114,7 @@ public class FlowableTest07 {
 
     @Test
     public void t3() throws IOException {
-        Task task = taskService.createTaskQuery().processDefinitionKey("process07").taskAssignee("mayu").singleResult();
+        Task task = taskService.createTaskQuery().processDefinitionKey("process07").taskAssignee("laowan").singleResult();
         if (task != null) {
             taskService.complete(task.getId());//完成任务时，设置流程变量的值
             System.out.println("任务执行完毕");
@@ -139,7 +139,12 @@ public class FlowableTest07 {
 
     @Test
     public void t6() throws IOException {
-        processService.moveToPre("9edaaf22-bf97-11ea-b348-005056c00008","驳回意见");
+        processService.moveToPre("ecef99b5-c030-11ea-a3e3-005056c00008","驳回意见");
+    }
+
+    @Test
+    public void t7() throws IOException {
+        processService.findPre("660d0bb3-c032-11ea-9b66-005056c00008");
     }
 
 }

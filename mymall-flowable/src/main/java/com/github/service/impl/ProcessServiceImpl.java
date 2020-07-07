@@ -4,13 +4,12 @@ import com.github.draw.FlowProcessDiagramGenerator;
 import com.github.service.ProcessService;
 import com.github.utils.ProcessUtils;
 import com.github.utils.ResultData;
+import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.flowable.bpmn.constants.BpmnXMLConstants;
-import org.flowable.bpmn.model.BpmnModel;
-import org.flowable.bpmn.model.FlowElement;
+import org.flowable.bpmn.model.*;
 import org.flowable.bpmn.model.Process;
-import org.flowable.bpmn.model.UserTask;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 import org.flowable.engine.HistoryService;
@@ -19,7 +18,9 @@ import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
 import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.history.HistoricProcessInstance;
+import org.flowable.engine.impl.util.ProcessDefinitionUtil;
 import org.flowable.engine.repository.ProcessDefinition;
+import org.flowable.engine.runtime.ActivityInstance;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.task.api.Task;
 import org.flowable.task.api.history.HistoricTaskInstance;
@@ -31,6 +32,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -192,20 +194,9 @@ public class ProcessServiceImpl implements ProcessService {
         // 获取所有节点信息
         Process process = repositoryService.getBpmnModel(processDefinition.getId()).getProcesses().get(0);
         // 获取全部节点列表，包含子节点
-        Collection<FlowElement> allElements = ProcessUtils.getAllElements(process.getFlowElements(), null);
+        Collection<FlowElement> allElements =process.getFlowElements();// ProcessUtils.getAllElements(process.getFlowElements(), null);
         // 获取当前任务节点元素
-        FlowElement source = null;
-        if (allElements != null) {
-            for (FlowElement flowElement : allElements) {
-                // 类型为用户节点
-                if (flowElement.getId().equals(task.getTaskDefinitionKey())) {
-                    // 获取节点信息
-                    source = flowElement;
-                    break;
-                }
-            }
-        }
-
+        FlowElement source = process.getFlowElement(task.getTaskDefinitionKey(), true);
 
         // 目的获取所有跳转到的节点 targetNodeIds
         // 获取当前节点的所有父级用户任务节点
@@ -220,7 +211,7 @@ public class ProcessServiceImpl implements ProcessService {
         // 获取全部历史节点活动实例，即已经走过的节点历史，数据采用开始时间升序
         List<HistoricTaskInstance> historicTaskInstanceList = historyService.createHistoricTaskInstanceQuery().processInstanceId(task.getProcessInstanceId()).orderByHistoricTaskInstanceStartTime().asc().list();
         // 数据清洗，将回滚导致的脏数据清洗掉
-        List<String> lastHistoricTaskInstanceList = ProcessUtils.historicTaskInstanceClean(allElements, historicTaskInstanceList);
+        List<String> lastHistoricTaskInstanceList = ProcessUtils.historicTaskInstanceClean(process, historicTaskInstanceList);
         // 此时历史任务实例为倒序，获取最后走的节点
         List<String> targetNodeIds = new ArrayList<>();
         // 循环结束标识，遇到当前目标节点的次数
@@ -313,4 +304,122 @@ public class ProcessServiceImpl implements ProcessService {
         }
         return ResultData.success();
     }
+
+    @Override
+    public void findPre(String taskId) {
+        Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+        Process process = repositoryService.getBpmnModel(task.getProcessDefinitionId()).getProcesses().get(0);
+        FlowNode currentFlowElement = (FlowNode) process.getFlowElement(task.getTaskDefinitionKey(), true);
+        log.info("currentFlowElement:"+currentFlowElement.getId());
+        List<ActivityInstance> activitys = runtimeService.createActivityInstanceQuery()
+                .processInstanceId(task.getProcessInstanceId()).finished().orderByActivityInstanceStartTime().asc().list();
+        for (ActivityInstance activity : activitys) {
+            log.info("activity:{}",activity);
+        }
+        List<String> activityIds = activitys.stream()
+                .filter(activity -> activity.getActivityType().equals(BpmnXMLConstants.ELEMENT_TASK_USER))
+                .filter(activity -> !activity.getActivityId().equals(task.getTaskDefinitionKey())).map(ActivityInstance::getActivityId)
+                .distinct().collect(Collectors.toList());
+        for (String activityId : activityIds) {
+            System.out.println("activityId = " + activityId);
+            FlowNode toBackFlowElement = (FlowNode) process.getFlowElement(activityId, true);
+            if (isReachable(process, toBackFlowElement, currentFlowElement)) {
+                log.info("BackFlowElement:{}",toBackFlowElement.getId());
+            }
+        }
+    }
+
+    public static boolean isReachable(Process process, FlowNode sourceElement, FlowNode targetElement) {
+        return isReachable(process, sourceElement, targetElement, Sets.newHashSet());
+    }
+
+    public static boolean isReachable(Process process, String sourceElementId, String targetElementId) {
+        FlowElement sourceFlowElement = process.getFlowElement(sourceElementId, true);
+        FlowNode sourceElement = null;
+        if (sourceFlowElement instanceof FlowNode) {
+            sourceElement = (FlowNode) sourceFlowElement;
+        } else if (sourceFlowElement instanceof SequenceFlow) {
+            sourceElement = (FlowNode) ((SequenceFlow) sourceFlowElement).getTargetFlowElement();
+        }
+        FlowElement targetFlowElement = process.getFlowElement(targetElementId, true);
+        FlowNode targetElement = null;
+        if (targetFlowElement instanceof FlowNode) {
+            targetElement = (FlowNode) targetFlowElement;
+        } else if (targetFlowElement instanceof SequenceFlow) {
+            targetElement = (FlowNode) ((SequenceFlow) targetFlowElement).getTargetFlowElement();
+        }
+        if (sourceElement == null) {
+            throw new FlowableException("Invalid sourceElementId '" + sourceElementId
+                    + "': no element found for this id n process definition '" + process.getId() + "'");
+        }
+        if (targetElement == null) {
+            throw new FlowableException("Invalid targetElementId '" + targetElementId
+                    + "': no element found for this id n process definition '" + process.getId() + "'");
+        }
+        Set<String> visitedElements = new HashSet<>();
+        return isReachable(process, sourceElement, targetElement, visitedElements);
+    }
+
+    public static boolean isReachable(Process process, FlowNode sourceElement, FlowNode targetElement,
+                                      Set<String> visitedElements) {
+
+        if (sourceElement instanceof StartEvent && isInEventSubprocess(sourceElement)) {
+            return false;
+        }
+        if (sourceElement.getOutgoingFlows().size() == 0) {
+            visitedElements.add(sourceElement.getId());
+            FlowElementsContainer parentElement = process.findParent(sourceElement);
+            if (parentElement instanceof SubProcess) {
+                sourceElement = (SubProcess) parentElement;
+                // 子流程的结束节点，若目标节点在该子流程中，说明无法到达，返回false
+                if (((SubProcess) sourceElement).getFlowElement(targetElement.getId()) != null) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        if (sourceElement.getId().equals(targetElement.getId())) {
+            return true;
+        }
+        // To avoid infinite looping, we must capture every node we visit
+        // and check before going further in the graph if we have already
+        // visited the node.
+        visitedElements.add(sourceElement.getId());
+        // 当前节点能够到达子流程，且目标节点在子流程中，说明可以到达，返回true
+        if (sourceElement instanceof SubProcess
+                && ((SubProcess) sourceElement).getFlowElement(targetElement.getId()) != null) {
+            return true;
+        }
+        List<SequenceFlow> sequenceFlows = sourceElement.getOutgoingFlows();
+        if (sequenceFlows != null && sequenceFlows.size() > 0) {
+            for (SequenceFlow sequenceFlow : sequenceFlows) {
+                String targetRef = sequenceFlow.getTargetRef();
+                FlowNode sequenceFlowTarget = (FlowNode) process.getFlowElement(targetRef, true);
+                if (sequenceFlowTarget != null && !visitedElements.contains(sequenceFlowTarget.getId())) {
+                    boolean reachable = isReachable(process, sequenceFlowTarget, targetElement, visitedElements);
+                    if (reachable) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    protected static boolean isInEventSubprocess(FlowNode flowNode) {
+        FlowElementsContainer flowElementsContainer = flowNode.getParentContainer();
+        while (flowElementsContainer != null) {
+            if (flowElementsContainer instanceof EventSubProcess) {
+                return true;
+            }
+            if (flowElementsContainer instanceof FlowElement) {
+                flowElementsContainer = ((FlowElement) flowElementsContainer).getParentContainer();
+            } else {
+                flowElementsContainer = null;
+            }
+        }
+        return false;
+    }
+
 }
