@@ -8,8 +8,8 @@ import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.flowable.bpmn.constants.BpmnXMLConstants;
-import org.flowable.bpmn.model.*;
 import org.flowable.bpmn.model.Process;
+import org.flowable.bpmn.model.*;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 import org.flowable.engine.HistoryService;
@@ -18,7 +18,6 @@ import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
 import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.history.HistoricProcessInstance;
-import org.flowable.engine.impl.util.ProcessDefinitionUtil;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ActivityInstance;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -193,8 +192,6 @@ public class ProcessServiceImpl implements ProcessService {
         ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().processDefinitionId(task.getProcessDefinitionId()).singleResult();
         // 获取所有节点信息
         Process process = repositoryService.getBpmnModel(processDefinition.getId()).getProcesses().get(0);
-        // 获取全部节点列表，包含子节点
-        Collection<FlowElement> allElements =process.getFlowElements();// ProcessUtils.getAllElements(process.getFlowElements(), null);
         // 获取当前任务节点元素
         FlowElement source = process.getFlowElement(task.getTaskDefinitionKey(), true);
 
@@ -422,4 +419,32 @@ public class ProcessServiceImpl implements ProcessService {
         return false;
     }
 
+    @Override
+    public void findPreNodes(String taskId) {
+        // 当前任务 task
+        Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+        // 获取所有节点信息，暂不考虑子流程情况
+        Process process = repositoryService.getBpmnModel(task.getProcessDefinitionId()).getProcesses().get(0);
+        Collection<FlowElement> flowElements = process.getFlowElements();
+        // 获取当前任务节点元素
+        UserTask source = (UserTask) process.getFlowElement(task.getTaskDefinitionKey(), true);
+        // 获取节点的所有路线
+        List<List<UserTask>> roads = ProcessUtils.findRoad(source, null, null, null);
+        // 可回退的节点列表
+        List<UserTask> userTaskList = new ArrayList<>();
+        for (List<UserTask> road : roads) {
+            if (userTaskList.size() == 0) {
+                // 还没有可回退节点直接添加
+                userTaskList = road;
+            } else {
+                // 如果已有回退节点，则比对取交集部分
+                userTaskList.retainAll(road);
+            }
+        }
+        System.out.println("--------------------- = -------------------------" );
+        for (UserTask userTask : userTaskList) {
+            System.out.println("userTask = " + userTask.getId()+","+userTask.getName());
+        }
+        System.out.println("--------------------- = -------------------------" );
+    }
 }

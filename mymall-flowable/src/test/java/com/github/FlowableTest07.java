@@ -144,7 +144,12 @@ public class FlowableTest07 {
 
     @Test
     public void t7() throws IOException {
-        processService.findPre("660d0bb3-c032-11ea-9b66-005056c00008");
+        processService.findPre("73a575fe-c063-11ea-a423-005056c00008");
+    }
+
+    @Test
+    public void t8() throws IOException {
+        processService.findPreNodes("73a575fe-c063-11ea-a423-005056c00008");
     }
 
 }
