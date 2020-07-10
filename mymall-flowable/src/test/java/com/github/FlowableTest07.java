@@ -125,8 +125,8 @@ public class FlowableTest07 {
     public void t4() throws IOException {
         List<String> nodeIds=new ArrayList<>();
         nodeIds.add("task4");
-        nodeIds.add("task5");
-        processService.moveNodeIdsToSingle("ffc5d7ba-bdd9-11ea-92ab-005056c00008",nodeIds,"task3");
+//        nodeIds.add("task5");
+        processService.moveNodeIdsToSingle("f951f0a1-c0bd-11ea-93b4-005056c00008",nodeIds,"task3");
     }
 
     @Test
@@ -134,22 +134,19 @@ public class FlowableTest07 {
         List<String> nodeIds=new ArrayList<>();
         nodeIds.add("task4");
         nodeIds.add("task5");
-        processService.moveSingleToNodeIds("ffc5d7ba-bdd9-11ea-92ab-005056c00008","task6",nodeIds);
+        processService.moveSingleToNodeIds("f951f0a1-c0bd-11ea-93b4-005056c00008","task6",nodeIds);
     }
 
     @Test
     public void t6() throws IOException {
-        processService.moveToPre("ecef99b5-c030-11ea-a3e3-005056c00008","驳回意见");
+        processService.moveToPre("aade874f-c0c2-11ea-a41f-005056c00008","驳回意见");
     }
+
+
 
     @Test
     public void t7() throws IOException {
-        processService.findPre("73a575fe-c063-11ea-a423-005056c00008");
-    }
-
-    @Test
-    public void t8() throws IOException {
-        processService.findPreNodes("73a575fe-c063-11ea-a423-005056c00008");
+        processService.findPreNodes("1726d6a6-c0bb-11ea-8ecd-005056c00008");
     }
 
 }

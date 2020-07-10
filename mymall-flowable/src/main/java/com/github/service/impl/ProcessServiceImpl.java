@@ -188,10 +188,8 @@ public class ProcessServiceImpl implements ProcessService {
         if(task.isSuspended()){
             return ResultData.fail("任务处于挂起状态");
         }
-        // 获取流程定义信息
-        ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().processDefinitionId(task.getProcessDefinitionId()).singleResult();
         // 获取所有节点信息
-        Process process = repositoryService.getBpmnModel(processDefinition.getId()).getProcesses().get(0);
+        Process process = repositoryService.getBpmnModel(task.getProcessDefinitionId()).getProcesses().get(0);
         // 获取当前任务节点元素
         FlowElement source = process.getFlowElement(task.getTaskDefinitionKey(), true);
 
@@ -288,9 +286,7 @@ public class ProcessServiceImpl implements ProcessService {
             if (targetNodeIds.size() > 1) {
                 // 1 对 多任务跳转，currentNodeIds 当前节点(1)，targetNodeIds 跳转到的节点(多)
                 this.moveSingleToNodeIds(task.getProcessInstanceId(),currentNodeIds.get(0),targetNodeIds);
-            }
-            // 如果父级任务只有一个，因此当前任务可能为网关中的任务
-            if (targetNodeIds.size() == 1) {
+            }else if (targetNodeIds.size() == 1) { // 如果父级任务只有一个，因此当前任务可能为网关中的任务
                 // 1 对 1 或 多 对 1 情况，currentNodeIds 当前要跳转的节点列表(1或多)，targetNodeIds.get(0) 跳转到的节点(1)
                 this.moveNodeIdsToSingle(task.getProcessInstanceId(),currentNodeIds,targetNodeIds.get(0));
             }
@@ -302,130 +298,12 @@ public class ProcessServiceImpl implements ProcessService {
         return ResultData.success();
     }
 
-    @Override
-    public void findPre(String taskId) {
-        Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-        Process process = repositoryService.getBpmnModel(task.getProcessDefinitionId()).getProcesses().get(0);
-        FlowNode currentFlowElement = (FlowNode) process.getFlowElement(task.getTaskDefinitionKey(), true);
-        log.info("currentFlowElement:"+currentFlowElement.getId());
-        List<ActivityInstance> activitys = runtimeService.createActivityInstanceQuery()
-                .processInstanceId(task.getProcessInstanceId()).finished().orderByActivityInstanceStartTime().asc().list();
-        for (ActivityInstance activity : activitys) {
-            log.info("activity:{}",activity);
-        }
-        List<String> activityIds = activitys.stream()
-                .filter(activity -> activity.getActivityType().equals(BpmnXMLConstants.ELEMENT_TASK_USER))
-                .filter(activity -> !activity.getActivityId().equals(task.getTaskDefinitionKey())).map(ActivityInstance::getActivityId)
-                .distinct().collect(Collectors.toList());
-        for (String activityId : activityIds) {
-            System.out.println("activityId = " + activityId);
-            FlowNode toBackFlowElement = (FlowNode) process.getFlowElement(activityId, true);
-            if (isReachable(process, toBackFlowElement, currentFlowElement)) {
-                log.info("BackFlowElement:{}",toBackFlowElement.getId());
-            }
-        }
-    }
-
-    public static boolean isReachable(Process process, FlowNode sourceElement, FlowNode targetElement) {
-        return isReachable(process, sourceElement, targetElement, Sets.newHashSet());
-    }
-
-    public static boolean isReachable(Process process, String sourceElementId, String targetElementId) {
-        FlowElement sourceFlowElement = process.getFlowElement(sourceElementId, true);
-        FlowNode sourceElement = null;
-        if (sourceFlowElement instanceof FlowNode) {
-            sourceElement = (FlowNode) sourceFlowElement;
-        } else if (sourceFlowElement instanceof SequenceFlow) {
-            sourceElement = (FlowNode) ((SequenceFlow) sourceFlowElement).getTargetFlowElement();
-        }
-        FlowElement targetFlowElement = process.getFlowElement(targetElementId, true);
-        FlowNode targetElement = null;
-        if (targetFlowElement instanceof FlowNode) {
-            targetElement = (FlowNode) targetFlowElement;
-        } else if (targetFlowElement instanceof SequenceFlow) {
-            targetElement = (FlowNode) ((SequenceFlow) targetFlowElement).getTargetFlowElement();
-        }
-        if (sourceElement == null) {
-            throw new FlowableException("Invalid sourceElementId '" + sourceElementId
-                    + "': no element found for this id n process definition '" + process.getId() + "'");
-        }
-        if (targetElement == null) {
-            throw new FlowableException("Invalid targetElementId '" + targetElementId
-                    + "': no element found for this id n process definition '" + process.getId() + "'");
-        }
-        Set<String> visitedElements = new HashSet<>();
-        return isReachable(process, sourceElement, targetElement, visitedElements);
-    }
-
-    public static boolean isReachable(Process process, FlowNode sourceElement, FlowNode targetElement,
-                                      Set<String> visitedElements) {
-
-        if (sourceElement instanceof StartEvent && isInEventSubprocess(sourceElement)) {
-            return false;
-        }
-        if (sourceElement.getOutgoingFlows().size() == 0) {
-            visitedElements.add(sourceElement.getId());
-            FlowElementsContainer parentElement = process.findParent(sourceElement);
-            if (parentElement instanceof SubProcess) {
-                sourceElement = (SubProcess) parentElement;
-                // 子流程的结束节点，若目标节点在该子流程中，说明无法到达，返回false
-                if (((SubProcess) sourceElement).getFlowElement(targetElement.getId()) != null) {
-                    return false;
-                }
-            } else {
-                return false;
-            }
-        }
-        if (sourceElement.getId().equals(targetElement.getId())) {
-            return true;
-        }
-        // To avoid infinite looping, we must capture every node we visit
-        // and check before going further in the graph if we have already
-        // visited the node.
-        visitedElements.add(sourceElement.getId());
-        // 当前节点能够到达子流程，且目标节点在子流程中，说明可以到达，返回true
-        if (sourceElement instanceof SubProcess
-                && ((SubProcess) sourceElement).getFlowElement(targetElement.getId()) != null) {
-            return true;
-        }
-        List<SequenceFlow> sequenceFlows = sourceElement.getOutgoingFlows();
-        if (sequenceFlows != null && sequenceFlows.size() > 0) {
-            for (SequenceFlow sequenceFlow : sequenceFlows) {
-                String targetRef = sequenceFlow.getTargetRef();
-                FlowNode sequenceFlowTarget = (FlowNode) process.getFlowElement(targetRef, true);
-                if (sequenceFlowTarget != null && !visitedElements.contains(sequenceFlowTarget.getId())) {
-                    boolean reachable = isReachable(process, sequenceFlowTarget, targetElement, visitedElements);
-                    if (reachable) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    protected static boolean isInEventSubprocess(FlowNode flowNode) {
-        FlowElementsContainer flowElementsContainer = flowNode.getParentContainer();
-        while (flowElementsContainer != null) {
-            if (flowElementsContainer instanceof EventSubProcess) {
-                return true;
-            }
-            if (flowElementsContainer instanceof FlowElement) {
-                flowElementsContainer = ((FlowElement) flowElementsContainer).getParentContainer();
-            } else {
-                flowElementsContainer = null;
-            }
-        }
-        return false;
-    }
 
     @Override
     public void findPreNodes(String taskId) {
         // 当前任务 task
         Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-        // 获取所有节点信息，暂不考虑子流程情况
         Process process = repositoryService.getBpmnModel(task.getProcessDefinitionId()).getProcesses().get(0);
-        Collection<FlowElement> flowElements = process.getFlowElements();
         // 获取当前任务节点元素
         UserTask source = (UserTask) process.getFlowElement(task.getTaskDefinitionKey(), true);
         // 获取节点的所有路线

@@ -60,24 +60,6 @@ public class ProcessUtils {
         return sequenceFlows;
     }
 
-    /**
-     * 获取全部节点列表，包含子流程节点
-     * @param flowElements
-     * @param allElements
-     * @return
-     */
-    public static Collection<FlowElement> getAllElements(Collection<FlowElement> flowElements, Collection<FlowElement> allElements) {
-        allElements = allElements == null ? new ArrayList<>() : allElements;
-
-        for (FlowElement flowElement : flowElements) {
-            allElements.add(flowElement);
-            if (flowElement instanceof SubProcess) {
-                // 继续深入子流程，进一步获取子流程
-                allElements = ProcessUtils.getAllElements(((SubProcess) flowElement).getFlowElements(), allElements);
-            }
-        }
-        return allElements;
-    }
 
     /**
      * 迭代获取父级任务节点列表，向前找
