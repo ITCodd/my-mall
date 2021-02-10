@@ -27,7 +27,6 @@ public interface ProcessService {
 
     ResultData moveToPre(String taskId, String comment);
 
-    void findPre(String taskId);
 
     void findPreNodes(String taskId);
 }
