@@ -45,17 +45,12 @@
         <dependency>
             <groupId>org.flowable</groupId>
             <artifactId>flowable-spring-boot-starter</artifactId>
-            <version>6.5.0</version>
+            <version>6.6.0</version>
         </dependency>
         <dependency>
             <groupId>org.flowable</groupId>
             <artifactId>flowable-bpmn-layout</artifactId>
-            <version>6.5.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mxgraph</groupId>
-            <artifactId>jgraphx</artifactId>
-            <version>3.7.4</version>
+            <version>6.6.0</version>
         </dependency>
         <dependency>
             <groupId>com.github</groupId>

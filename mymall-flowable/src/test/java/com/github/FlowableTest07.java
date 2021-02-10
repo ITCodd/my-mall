@@ -3,6 +3,7 @@ package com.github;
 import com.github.service.ProcessService;
 import com.github.utils.FlowElementUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.flowable.bpmn.BpmnAutoLayout;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.Process;
 import org.flowable.engine.HistoryService;
@@ -89,7 +90,7 @@ public class FlowableTest07 {
         String processName = PROCESSNAME+".bpmn20.xml";
 
         //生成自动布局
-//        new BpmnAutoLayout(bpmnModel).execute();
+        new BpmnAutoLayout(bpmnModel).execute();
 
         repositoryService.createDeployment()
                 .name(PROCESSNAME)
@@ -139,17 +140,18 @@ public class FlowableTest07 {
 
     @Test
     public void t6() throws IOException {
-        processService.moveToPre("ecef99b5-c030-11ea-a3e3-005056c00008","驳回意见");
+        processService.moveToPre("c401bf0c-c065-11ea-9e4e-005056c00008","驳回意见");
     }
 
     @Test
     public void t7() throws IOException {
-        processService.findPre("73a575fe-c063-11ea-a423-005056c00008");
+        processService.findPre("5c52d147-c066-11ea-83f3-005056c00008");
     }
 
     @Test
     public void t8() throws IOException {
-        processService.findPreNodes("73a575fe-c063-11ea-a423-005056c00008");
+        processService.findPre("5c523503-c066-11ea-83f3-005056c00008");
+        processService.findPreNodes("5c523503-c066-11ea-83f3-005056c00008");
     }
 
 }
